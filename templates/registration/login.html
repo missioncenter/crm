@@ -1,12 +1,36 @@
 {% extends "projects/base.html" %}
 
+{% block header %}{% endblock %}
+
 {% block content %}
 <div class="auth-page">
-    <h1>Login</h1>
-    <form method="post" class="auth-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
-    </form>
+    <div class="auth-card">
+        <h1>Login</h1>
+        <p class="auth-subtitle">Enter your credentials to access the CRM dashboard.</p>
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {{ redirect_field_value }}
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+            <div class="field-group">
+                {{ form.username.label_tag }}
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="field-error">{{ form.username.errors|striptags }}</div>
+                {% endif %}
+            </div>
+            <div class="field-group">
+                {{ form.password.label_tag }}
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div class="field-error">{{ form.password.errors|striptags }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="button">Login</button>
+        </form>
+    </div>
 </div>
 {% endblock %}

@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{% static 'projects/css/style.css' %}" />
 </head>
 <body>
+{% block header %}
 <header class="topbar">
     <div class="container header-inner">
         <div class="brand">
@@ -40,6 +41,7 @@
         </div>
     </div>
 </header>
+{% endblock %}
 <main class="container">
     {% block content %}{% endblock %}
 </main>
