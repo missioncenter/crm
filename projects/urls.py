@@ -20,6 +20,10 @@ urlpatterns = [
     path("groups/create/", views.group_create, name="group_create"),
     path("groups/<int:pk>/edit/", views.group_update, name="group_update"),
     path("groups/<int:pk>/delete/", views.group_delete, name="group_delete"),
+    path("roles/", views.role_list, name="role_list"),
+    path("roles/create/", views.role_create, name="role_create"),
+    path("roles/<int:pk>/edit/", views.role_update, name="role_update"),
+    path("roles/<int:pk>/delete/", views.role_delete, name="role_delete"),
     path("calendar/", views.calendar_view, name="calendar"),
     path("tasks/update-status/", views.update_task_status, name="task_update_status"),
 ]

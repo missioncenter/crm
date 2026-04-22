@@ -8,14 +8,36 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
-from .forms import GroupForm, ProjectForm, TaskForm, UserCreateForm, UserUpdateForm
-from .models import Project, Task, TaskStatus
+from .forms import GroupForm, ProjectForm, RoleForm, TaskForm, UserCreateForm, UserUpdateForm
+from .models import Project, Role, Task, TaskStatus
 
 User = get_user_model()
 
 
-def is_admin(user):
-    return user.is_staff or user.groups.filter(name="Admins").exists()
+def has_role(user, role_name):
+    if not user.is_authenticated:
+        return False
+    return user.roles.filter(name__iexact=role_name).exists() or user.is_superuser
+
+
+def is_admin_role(user):
+    return has_role(user, "admin")
+
+
+def is_moderator_role(user):
+    return has_role(user, "moderator")
+
+
+def is_executor_role(user):
+    return has_role(user, "executor")
+
+
+def can_manage_projects(user):
+    return is_admin_role(user) or is_moderator_role(user)
+
+
+def can_manage_users(user):
+    return is_admin_role(user)
 
 
 @login_required
@@ -63,8 +85,8 @@ def project_list(request):
 
 @login_required
 def project_create(request):
-    if not is_admin(request.user):
-        return HttpResponseForbidden("Only admins can manage projects.")
+    if not can_manage_projects(request.user):
+        return HttpResponseForbidden("Only admins or moderators can create projects.")
     form = ProjectForm(request.POST or None)
     if form.is_valid():
         form.save()
@@ -74,8 +96,8 @@ def project_create(request):
 
 @login_required
 def project_update(request, pk):
-    if not is_admin(request.user):
-        return HttpResponseForbidden("Only admins can manage projects.")
+    if not can_manage_projects(request.user):
+        return HttpResponseForbidden("Only admins or moderators can edit projects.")
     project = get_object_or_404(Project, pk=pk)
     form = ProjectForm(request.POST or None, instance=project)
     if form.is_valid():
@@ -86,8 +108,8 @@ def project_update(request, pk):
 
 @login_required
 def project_delete(request, pk):
-    if not is_admin(request.user):
-        return HttpResponseForbidden("Only admins can manage projects.")
+    if not can_manage_projects(request.user):
+        return HttpResponseForbidden("Only admins or moderators can delete projects.")
     project = get_object_or_404(Project, pk=pk)
     if request.method == "POST":
         project.delete()
@@ -97,15 +119,17 @@ def project_delete(request, pk):
 
 @login_required
 def user_list(request):
+    if not can_manage_users(request.user):
+        return HttpResponseForbidden("Only admins can manage users.")
     users = User.objects.order_by("username").prefetch_related(
-        "groups", "projects", "assigned_tasks", "supporting_tasks"
+        "groups", "projects", "assigned_tasks", "supporting_tasks", "roles"
     )
     return render(request, "projects/user_list.html", {"users": users})
 
 
 @login_required
 def user_create(request):
-    if not is_admin(request.user):
+    if not can_manage_users(request.user):
         return HttpResponseForbidden("Only admins can manage users.")
     form = UserCreateForm(request.POST or None)
     if form.is_valid():
@@ -116,7 +140,7 @@ def user_create(request):
 
 @login_required
 def user_update(request, pk):
-    if not is_admin(request.user):
+    if not can_manage_users(request.user):
         return HttpResponseForbidden("Only admins can manage users.")
     user = get_object_or_404(User, pk=pk)
     form = UserUpdateForm(request.POST or None, instance=user)
@@ -128,7 +152,7 @@ def user_update(request, pk):
 
 @login_required
 def user_delete(request, pk):
-    if not is_admin(request.user):
+    if not can_manage_users(request.user):
         return HttpResponseForbidden("Only admins can manage users.")
     user = get_object_or_404(User, pk=pk)
     if request.method == "POST":
@@ -139,6 +163,8 @@ def user_delete(request, pk):
 
 @login_required
 def group_list(request):
+    if not is_admin(request.user):
+        return HttpResponseForbidden("Only admins can manage groups.")
     groups = Group.objects.order_by("name")
     return render(request, "projects/group_list.html", {"groups": groups})
 
@@ -178,6 +204,48 @@ def group_delete(request, pk):
 
 
 @login_required
+def role_list(request):
+    if not is_admin_role(request.user):
+        return HttpResponseForbidden("Only admins can manage roles.")
+    roles = Role.objects.prefetch_related("users").order_by("name")
+    return render(request, "projects/role_list.html", {"roles": roles})
+
+
+@login_required
+def role_create(request):
+    if not is_admin_role(request.user):
+        return HttpResponseForbidden("Only admins can manage roles.")
+    form = RoleForm(request.POST or None)
+    if form.is_valid():
+        form.save()
+        return redirect("role_list")
+    return render(request, "projects/role_form.html", {"form": form, "form_title": "Create Role"})
+
+
+@login_required
+def role_update(request, pk):
+    if not is_admin_role(request.user):
+        return HttpResponseForbidden("Only admins can manage roles.")
+    role = get_object_or_404(Role, pk=pk)
+    form = RoleForm(request.POST or None, instance=role)
+    if form.is_valid():
+        form.save()
+        return redirect("role_list")
+    return render(request, "projects/role_form.html", {"form": form, "form_title": f"Edit Role: {role.name}"})
+
+
+@login_required
+def role_delete(request, pk):
+    if not is_admin_role(request.user):
+        return HttpResponseForbidden("Only admins can manage roles.")
+    role = get_object_or_404(Role, pk=pk)
+    if request.method == "POST":
+        role.delete()
+        return redirect("role_list")
+    return render(request, "projects/role_confirm_delete.html", {"role": role})
+
+
+@login_required
 def task_list(request):
     tasks = Task.objects.select_related("project", "executor").prefetch_related("co_executors")
     return render(request, "projects/task_list.html", {"tasks": tasks})
@@ -185,6 +253,8 @@ def task_list(request):
 
 @login_required
 def task_create(request):
+    if is_executor_role(request.user) and not can_manage_projects(request.user):
+        return HttpResponseForbidden("Executors cannot create tasks.")
     form = TaskForm(request.POST or None)
     if form.is_valid():
         form.save()

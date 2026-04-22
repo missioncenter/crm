@@ -1,4 +1,5 @@
 {% load static %}
+{% load role_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,8 +28,11 @@
                 <a href="{% url 'project_list' %}">Projects</a>
                 <a href="{% url 'task_list' %}">Tasks</a>
                 <a href="{% url 'calendar' %}">Calendar</a>
-                <a href="{% url 'user_list' %}">Users</a>
-                <a href="{% url 'group_list' %}">Groups</a>
+                {% if user.is_staff or user.is_superuser or user|has_role:'admin' %}
+                    <a href="{% url 'user_list' %}">Users</a>
+                    <a href="{% url 'group_list' %}">Groups</a>
+                    <a href="{% url 'role_list' %}">Roles</a>
+                {% endif %}
             </nav>
             <div class="user-panel">
                 {% if user.is_authenticated %}

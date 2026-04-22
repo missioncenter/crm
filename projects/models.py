@@ -29,6 +29,18 @@ class Project(models.Model):
         return user.groups.filter(name="Admins").exists()
 
 
+class Role(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    users = models.ManyToManyField(User, blank=True, related_name="roles")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class TaskStatus(models.TextChoices):
     TODO = "ToDo", "To Do"
     IN_PROGRESS = "InProgress", "In Progress"
