@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.http import JsonResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from django.utils import timezone
 
 from .forms import GroupForm, ProjectForm, TaskForm, UserCreateForm, UserUpdateForm
 from .models import Project, Task, TaskStatus
@@ -29,7 +30,29 @@ def dashboard(request):
         }
         for value, label in status_map.items()
     ]
-    return render(request, "projects/dashboard.html", {"columns": columns})
+
+    projects_count = Project.objects.count()
+    groups_count = Group.objects.count()
+    users_count = User.objects.count()
+    tasks_count = tasks.count()
+    overdue_count = tasks.filter(deadline__lt=timezone.now().date()).exclude(status=TaskStatus.DONE).count()
+
+    stats = [
+        {"label": "Projects", "value": projects_count},
+        {"label": "Groups", "value": groups_count},
+        {"label": "Users", "value": users_count},
+        {"label": "Tasks", "value": tasks_count},
+        {"label": "Overdue", "value": overdue_count},
+    ]
+
+    return render(
+        request,
+        "projects/dashboard.html",
+        {
+            "columns": columns,
+            "stats": stats,
+        },
+    )
 
 
 @login_required

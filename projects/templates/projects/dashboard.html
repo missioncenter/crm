@@ -1,6 +1,14 @@
 {% extends "projects/base.html" %}
 {% block content %}
 <h1>Kanban Dashboard</h1>
+<div class="stats-grid">
+    {% for stat in stats %}
+    <article class="stat-card">
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-label">{{ stat.label }}</div>
+    </article>
+    {% endfor %}
+</div>
 <div class="board">
     {% for column in columns %}
     <section class="kanban-column">
