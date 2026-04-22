@@ -1,0 +1,35 @@
+{% extends "projects/base.html" %}
+{% block content %}
+<h1>Kanban Dashboard</h1>
+<div class="board">
+    {% for column in columns %}
+    <section class="kanban-column">
+        <header>
+            <h2>{{ column.label }}</h2>
+            <span class="badge">{{ column.tasks|length }}</span>
+        </header>
+        <div class="task-list" data-status="{{ column.key }}">
+            {% for task in column.tasks %}
+            <article class="task-card {% if task.is_overdue %}overdue{% endif %}" data-task-id="{{ task.id }}">
+                <h3>{{ task.title }}</h3>
+                <p>{{ task.description|default:"No description" }}</p>
+                <p class="meta">
+                    <strong>Project:</strong> {{ task.project.title }}<br />
+                    <strong>Executor:</strong>
+                    {% if task.executor %}
+                        {{ task.executor.username }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </p>
+                <p class="deadline">Deadline: {{ task.deadline|default:"—" }}</p>
+            </article>
+            {% empty %}
+            <div class="empty-state">No tasks</div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</div>
+<form id="csrf-form" style="display:none;">{% csrf_token %}</form>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRM Local MVP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{% static 'projects/css/style.css' %}" />
+</head>
+<body>
+<header class="topbar">
+    <div class="container header-inner">
+        <div class="brand">
+            <div class="brand-icon">CRM</div>
+            <div>
+                <div class="brand-title">CRM Local</div>
+                <div class="brand-subtitle">Project management MVP</div>
+            </div>
+        </div>
+        <div class="toolbar-group">
+            <nav class="main-nav">
+                <a href="{% url 'dashboard' %}">Dashboard</a>
+                <a href="{% url 'project_list' %}">Projects</a>
+                <a href="{% url 'task_list' %}">Tasks</a>
+                <a href="{% url 'calendar' %}">Calendar</a>
+                <a href="{% url 'user_list' %}">Users</a>
+                <a href="{% url 'group_list' %}">Groups</a>
+            </nav>
+            <div class="user-panel">
+                {% if user.is_authenticated %}
+                    <span>{{ user.username }}</span>
+                    <a class="text-button" href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a class="text-button" href="{% url 'login' %}">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha512-oGbnN5RSJ+Ke3E2XkKJOiSgXxBCe2w+qZZkY2D8ryrKXMp1oIwxNZ7epJzy4KfO53quSbt3sfS8RfsqL7bs6Rw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="{% static 'projects/js/kanban.js' %}"></script>
+</body>
+</html>

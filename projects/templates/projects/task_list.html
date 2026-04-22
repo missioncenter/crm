@@ -1,0 +1,38 @@
+{% extends "projects/base.html" %}
+{% block content %}
+<h1>Tasks</h1>
+<div class="page-actions">
+    <a class="button" href="{% url 'task_create' %}">Create Task</a>
+</div>
+<table class="table-list">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Project</th>
+            <th>Status</th>
+            <th>Executor</th>
+            <th>Deadline</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr class="{% if task.is_overdue %}overdue-row{% endif %}">
+            <td>{{ task.title }}</td>
+            <td>{{ task.project.title }}</td>
+            <td>{{ task.get_status_display }}</td>
+            <td>{{ task.executor.username|default:'—' }}</td>
+            <td>{{ task.deadline|default:'—' }}</td>
+            <td>
+                <a href="{% url 'task_update' task.pk %}">Edit</a>
+                <a href="{% url 'task_delete' task.pk %}">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No tasks available.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

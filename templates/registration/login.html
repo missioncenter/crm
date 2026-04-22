@@ -1,0 +1,12 @@
+{% extends "projects/base.html" %}
+
+{% block content %}
+<div class="auth-page">
+    <h1>Login</h1>
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Login</button>
+    </form>
+</div>
+{% endblock %}

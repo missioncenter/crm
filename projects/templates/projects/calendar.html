@@ -1,0 +1,29 @@
+{% extends "projects/base.html" %}
+{% block content %}
+<h1>Calendar</h1>
+<div class="calendar-grid">
+    {% for date, items in calendar.items %}
+    <section class="calendar-day">
+        <h2>{{ date }}</h2>
+        <ul>
+            {% for task in items %}
+            <li class="{% if task.is_overdue %}overdue{% endif %}">
+                <strong>{{ task.title }}</strong> — {{ task.project.title }}
+                <span>{{ task.get_status_display }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endfor %}
+</div>
+{% if no_deadline %}
+<section class="calendar-day">
+    <h2>No deadline</h2>
+    <ul>
+        {% for task in no_deadline %}
+        <li>{{ task.title }} — {{ task.project.title }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+{% endblock %}
