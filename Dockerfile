@@ -4,21 +4,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/root/.local/bin:$PATH"
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-COPY supervisord.conf /etc/supervisord.conf
-COPY nginx.conf /etc/nginx/nginx.conf
-
 RUN python manage.py collectstatic --noinput
-RUN mkdir -p /var/run/nginx
 
-EXPOSE 9090
-CMD ["/usr/local/bin/supervisord", "-n", "-c", "/etc/supervisord.conf"]
+EXPOSE 8000
+CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--threads", "2", "--log-level", "info"]
