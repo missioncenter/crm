@@ -88,5 +88,12 @@ CRM Local MVP построен как минимальный аналог Bitrix
 - `.github/workflows/ci.yml` (тесты + lint),
 - `.env.example` и изменения в `settings.py` для загрузки из окружения.
 
-Оставьте пожелания — выполню автоматически.
+## Инфраструктура и запуск
+- Dev server: 192.168.16.178 (Debian 13).
+- Прямой доступ не использовать без участия человека.
+- Сервисы работают в Docker.
+- Пример: docker compose exec web python manage.py migrate.
+- SSH-ключи и секреты не менять без явного запроса.
+- All commands must be executed via `docker compose exec`.
+- Use ssh credentials for access: ssh -i "C:\Users\azama\soft\key\id_rsa" user@192.168.16.178
 
