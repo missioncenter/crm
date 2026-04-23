@@ -457,30 +457,32 @@ a:hover { text-decoration: underline; }
 .overdue-label { color: var(--md-error); font-weight: 600; font-size: 0.8rem; }
 
 .task-filters {
+  width: 100%;
   max-width: none;
   margin-bottom: 20px;
 }
 
 .task-filter-form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
   gap: 16px;
+  align-items: end;
 }
 
 .filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  display: contents;
 }
 
 .task-filters .field-group {
   margin-bottom: 0;
+  min-width: 0;
 }
 
 .filter-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  justify-self: end;
 }
 
 /* ── Forms ──────────────────────────────────────────────── */
