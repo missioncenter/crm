@@ -19,6 +19,8 @@ ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(",") if host.strip()]
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
