@@ -22,12 +22,14 @@
         {% for role in roles %}
         <tr>
             <td>{{ role.name }}</td>
-            <td>{{ role.description|default:'—' }}</td>
+            <td class="rich-text-content">{{ role.description|default:'—'|safe }}</td>
             <td>{{ role.users.count }}</td>
             <td>
                 {% if not role.is_protected %}
-                    <a href="{% url 'role_update' role.pk %}">Edit</a>
-                    <a href="{% url 'role_delete' role.pk %}">Delete</a>
+                    <span class="table-actions">
+                        <a class="table-action-icon" href="{% url 'role_update' role.pk %}" title="Edit role" aria-label="Edit role"><span aria-hidden="true">✎</span><span class="sr-only">Edit role</span></a>
+                        <a class="table-action-icon table-action-icon--danger" href="{% url 'role_delete' role.pk %}" title="Delete role" aria-label="Delete role"><span aria-hidden="true">🗑</span><span class="sr-only">Delete role</span></a>
+                    </span>
                 {% else %}
                     <span class="muted">Protected</span>
                 {% endif %}

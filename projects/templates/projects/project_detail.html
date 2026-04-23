@@ -8,6 +8,8 @@
     <div class="page-actions">
         {% if can_edit_project %}
             <a class="button" href="{% url 'project_update' project.pk %}">Edit</a>
+        {% endif %}
+        {% if can_delete_project %}
             <a class="button danger" href="{% url 'project_delete' project.pk %}">Delete</a>
         {% endif %}
     </div>
@@ -17,7 +19,7 @@
 
     <section class="card-section">
         <h2>Description</h2>
-        <p>{{ project.description|default:'No description provided.' }}</p>
+        <div class="rich-text-content">{{ project.description|default:'No description provided.'|safe }}</div>
     </section>
 
     <section class="card-section">

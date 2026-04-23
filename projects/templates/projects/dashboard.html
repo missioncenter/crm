@@ -25,10 +25,10 @@
         </header>
         <div class="task-list" data-status="{{ column.key }}">
             {% for task in column.tasks %}
-            <article class="task-card {% if task.is_overdue %}overdue{% endif %}" data-task-id="{{ task.id }}" data-status="{{ task.status }}">
-                <h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">{{ task.title }}{% if show_visibility_status %}<span class="badge{% if task.hidden %} badge-danger{% endif %}">{{ task.hidden|yesno:"Hidden,Published" }}</span>{% endif %}</h3>
+            <article class="task-card {% if task.is_overdue %}overdue{% endif %}" data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-task-url="{% url 'task_detail' task.pk %}" tabindex="0" role="link" aria-label="Open task {{ task.title }}">
+               <h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">{{ task.title }} <!--{% if show_visibility_status %}<span class="badge{% if task.hidden %} badge-danger{% endif %}">{{ task.hidden|yesno:"Hidden,Published" }}</span>{% endif %}--></h3> 
                 {% include "projects/_task_progress_bar.html" with progress=task.dashboard_progress_width compact=True %}
-                <p>{{ task.description|default:"No description" }}</p>
+                <div class="rich-text-content">{{ task.description|default:"No description"|safe }}</div>
                 <p class="meta">
                     <strong>Project:</strong> {{ task.project.title }}<br />
                     <strong>Executor:</strong>

@@ -58,7 +58,7 @@
     <thead>
         <tr>
             <th>Title</th>
-            <th>Project</th>
+            <th class="task-table-project-col">Project</th>
             <th>Status</th>
             <th>Progress</th>
             <th>Executor</th>
@@ -74,7 +74,7 @@
         {% for task in tasks %}
         <tr class="{% if task.is_overdue %}overdue-row{% endif %}">
             <td><a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a></td>
-            <td><a href="{% url 'project_detail' task.project.pk %}">{{ task.project.title }}</a></td>
+            <td class="task-table-project-col"><a href="{% url 'project_detail' task.project.pk %}">{{ task.project.title }}</a></td>
             <td>{{ task.get_status_display }}{% if task.is_overdue %} • <span class="overdue-label">Overdue</span>{% endif %}</td>
             <td>{% include "projects/_task_progress_bar.html" with progress=task.progress compact=True %}</td>
             <td>{{ task.executor.username|default:'—' }}</td>
@@ -84,15 +84,15 @@
             <td>{{ task.created_at|date:"Y-m-d H:i" }}</td>
             <td>{{ task.deadline|default:'—' }}</td>
             <td>
-                <a href="{% url 'task_detail' task.pk %}">View</a>
-                {% if task.can_edit %}
-                <span class="project-action-separator">|</span>
-                <a href="{% url 'task_update' task.pk %}">Edit</a>
-                {% endif %}
-                {% if task.can_delete %}
-                <span class="project-action-separator">|</span>
-                <a href="{% url 'task_delete' task.pk %}">Delete</a>
-                {% endif %}
+                <span class="table-actions">
+                    <a class="table-action-icon" href="{% url 'task_detail' task.pk %}" title="View task" aria-label="View task"><span aria-hidden="true">👁</span><span class="sr-only">View task</span></a>
+                    {% if task.can_edit %}
+                    <a class="table-action-icon" href="{% url 'task_update' task.pk %}" title="Edit task" aria-label="Edit task"><span aria-hidden="true">✎</span><span class="sr-only">Edit task</span></a>
+                    {% endif %}
+                    {% if task.can_delete %}
+                    <a class="table-action-icon table-action-icon--danger" href="{% url 'task_delete' task.pk %}" title="Delete task" aria-label="Delete task"><span aria-hidden="true">🗑</span><span class="sr-only">Delete task</span></a>
+                    {% endif %}
+                </span>
             </td>
         </tr>
         {% empty %}

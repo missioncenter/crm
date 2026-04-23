@@ -107,6 +107,13 @@ class Task(models.Model):
     deadline = models.DateField(null=True, blank=True)
     progress = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="tasks")
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="owned_tasks",
+    )
     executor = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,

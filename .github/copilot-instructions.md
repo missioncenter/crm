@@ -44,7 +44,7 @@ CRM Local MVP построен как минимальный аналог Bitrix
 - `supervisord.conf` — управление `gunicorn` и `nginx`
 - `nginx.conf` — проксирование на порт `8000` и выдача `static`/`media`
 - `manage.py` — Django CLI
-- `crm_local/` — основной Django проект
+- `core/` — основной Django проект
 - `projects/` — приложение бизнес-логики
 - `projects/static/` — CSS/JS, включая SortableJS для Kanban
 - `projects/templates/` — шаблоны страниц
@@ -52,8 +52,8 @@ CRM Local MVP построен как минимальный аналог Bitrix
 
 ## Важные файлы
 
-- `crm_local/settings.py`
-- `crm_local/urls.py`
+- `core/settings.py`
+- `core/urls.py`
 - `supervisord.conf`
 - `nginx.conf`
 - `Dockerfile`
@@ -71,7 +71,7 @@ CRM Local MVP построен как минимальный аналог Bitrix
 Что изменено недавно:
 - Добавлен `.gitignore`.
 - Обновлён `README.md` с кратким обзором.
-- Добавлен `ANALYSIS.md` с глубоким анализом и рекомендациями.
+- Добавлен `docs/analysis.md` с глубоким анализом и рекомендациями.
 
 Советы для Copilot (коротко):
 - При изменениях конфигурации рекомендовать вынос секретов в переменные окружения и использование `.env.example`.
@@ -79,7 +79,7 @@ CRM Local MVP построен как минимальный аналог Bitrix
 - Для изменений кода — предлагать тесты (pytest-django) и pre-commit hooks.
 
 Полезные места в репозитории:
-- `crm_local/settings.py` — настройки проекта
+- `core/settings.py` — настройки проекта
 - `projects/models.py`, `projects/views.py`, `projects/forms.py` — основная логика
 - `Dockerfile`, `supervisord.conf`, `nginx.conf` — контейнер/сервер
 

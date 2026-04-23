@@ -32,8 +32,10 @@
             <td>{{ user.projects.count }}</td>
             <td>{{ user.assigned_tasks.count|add:user.supporting_tasks.count }}</td>
             <td>
-                <a href="{% url 'user_update' user.pk %}">Edit</a>
-                <a href="{% url 'user_delete' user.pk %}">Delete</a>
+                <span class="table-actions">
+                    <a class="table-action-icon" href="{% url 'user_update' user.pk %}" title="Edit user" aria-label="Edit user"><span aria-hidden="true">✎</span><span class="sr-only">Edit user</span></a>
+                    <a class="table-action-icon table-action-icon--danger" href="{% url 'user_delete' user.pk %}" title="Delete user" aria-label="Delete user"><span aria-hidden="true">🗑</span><span class="sr-only">Delete user</span></a>
+                </span>
             </td>
         </tr>
         {% empty %}

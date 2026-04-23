@@ -18,7 +18,13 @@
 <div class="page-header">
     <div>
         <h1>Global Activity Feed</h1>
-        <p style="margin:0; font-size:0.85rem; color:var(--md-on-surface-muted);">Latest updates and comments from tasks you can access.</p>
+        <p style="margin:0; font-size:0.85rem; color:var(--md-on-surface-muted);">
+            {% if activity_feed_global %}
+                Latest updates and comments across all tasks.
+            {% else %}
+                Latest updates and comments from tasks you can access.
+            {% endif %}
+        </p>
     </div>
     <div class="header-actions">
         <a href="{% url 'dashboard' %}" class="button secondary">Open Kanban</a>

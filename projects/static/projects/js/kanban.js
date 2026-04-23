@@ -152,6 +152,78 @@ function bindActivityFeed() {
   window.setInterval(refreshFeed, 60000);
 }
 
+function bindWysiwygEditors() {
+  const editors = document.querySelectorAll("[data-wysiwyg-field]");
+  if (!editors.length) return;
+
+  const exec = (command, value = null) => {
+    document.execCommand(command, false, value);
+  };
+
+  const sanitizeHtml = (html) => {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html || "";
+    wrapper.querySelectorAll("script, style, iframe, object, embed").forEach((node) => node.remove());
+    wrapper.querySelectorAll("a").forEach((link) => {
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+    });
+    return wrapper.innerHTML;
+  };
+
+  editors.forEach((field) => {
+    const editor = field.querySelector("[data-wysiwyg-editor]");
+    const textarea = field.querySelector("textarea[data-wysiwyg-textarea]");
+    const toolbar = field.querySelector("[data-wysiwyg-toolbar]");
+    if (!editor || !textarea) return;
+
+    editor.innerHTML = textarea.value || "";
+
+    const syncToTextarea = () => {
+      textarea.value = sanitizeHtml(editor.innerHTML.trim());
+    };
+
+    editor.addEventListener("input", syncToTextarea);
+    editor.addEventListener("keyup", syncToTextarea);
+    editor.addEventListener("paste", () => window.setTimeout(syncToTextarea, 0));
+    editor.addEventListener("cut", () => window.setTimeout(syncToTextarea, 0));
+    editor.addEventListener("drop", () => window.setTimeout(syncToTextarea, 0));
+    editor.addEventListener("compositionend", syncToTextarea);
+    editor.addEventListener("blur", syncToTextarea);
+
+    if (toolbar) {
+      toolbar.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-wysiwyg-command]");
+        if (!button) return;
+        event.preventDefault();
+        editor.focus();
+        const command = button.dataset.wysiwygCommand;
+        if (command === "createLink") {
+          const currentSelection = window.getSelection();
+          const selectedText = currentSelection ? currentSelection.toString().trim() : "";
+          const url = window.prompt("Enter a link URL", "https://");
+          if (!url) return;
+          exec(command, url.trim());
+          if (!selectedText) {
+            syncToTextarea();
+          }
+        } else {
+          exec(command);
+        }
+        syncToTextarea();
+      });
+    }
+
+    const form = textarea.closest("form");
+    if (form) {
+      form.addEventListener("submit", () => syncToTextarea());
+      form.addEventListener("formdata", () => syncToTextarea());
+    }
+
+    syncToTextarea();
+  });
+}
+
 function createSortable(columnElement) {
   Sortable.create(columnElement, {
     group: "shared",
@@ -159,7 +231,11 @@ function createSortable(columnElement) {
     ghostClass: "task-card--ghost",
     chosenClass: "task-card--chosen",
     dragClass: "task-card--dragging",
+    onStart: function () {
+      window.__kanbanDragging = true;
+    },
     onEnd: function (event) {
+      window.__kanbanDragging = false;
       const fromList = event.from;
       const toList = event.to;
 
@@ -199,16 +275,42 @@ function createSortable(columnElement) {
   });
 }
 
+function bindTaskCardNavigation() {
+  document.querySelectorAll(".task-card[data-task-url]").forEach((card) => {
+    const openCard = () => {
+      const url = card.dataset.taskUrl;
+      if (url) window.location.href = url;
+    };
+
+    card.addEventListener("click", (event) => {
+      if (window.__kanbanDragging) return;
+      if (event.target.closest("a, button, input, textarea, select, [contenteditable='true']")) return;
+      openCard();
+    });
+
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openCard();
+      }
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".task-list").forEach((column) => createSortable(column));
+  bindTaskCardNavigation();
   syncProgressBars();
   bindProgressSlider();
   bindActivityFeed();
+  bindWysiwygEditors();
 
   const commentForm = document.getElementById("task-comment-form");
   const commentsList = document.getElementById("task-comments-list");
   const commentCount = document.getElementById("task-comment-count");
   if (commentForm && commentsList) {
+    const commentEditor = commentForm.querySelector("[data-wysiwyg-editor]");
+    const commentTextarea = commentForm.querySelector("textarea[data-wysiwyg-textarea]");
     commentForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const formData = new FormData(commentForm);
@@ -229,6 +331,12 @@ document.addEventListener("DOMContentLoaded", () => {
             commentCount.textContent = String(commentsList.querySelectorAll(".task-comment-item").length);
           }
           commentForm.reset();
+          if (commentEditor) {
+            commentEditor.innerHTML = "";
+          }
+          if (commentTextarea) {
+            commentTextarea.value = "";
+          }
           showToast("Comment posted.", true);
         })
         .catch(() => showToast("Unable to post comment.", false));

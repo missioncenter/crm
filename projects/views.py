@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from .forms import GroupForm, ProjectForm, RoleForm, TaskForm, UserCreateForm, UserUpdateForm
+from .html_sanitizer import sanitize_rich_text
 from .models import Comment, Project, Role, Task, TaskActivity, TaskStatus
 
 User = get_user_model()
@@ -48,7 +49,7 @@ def is_executor_role(user):
 
 
 def can_manage_projects(user):
-    return is_admin_role(user) or is_moderator_role(user)
+    return is_admin_role(user) or is_moderator_role(user) or has_role(user, "content") or has_role(user, "pm")
 
 
 def can_manage_users(user):
@@ -62,7 +63,15 @@ def can_edit_project(user, project):
         return True
     if is_admin_role(user):
         return True
-    return has_role(user, "content")
+    return has_role(user, "content") or has_role(user, "pm")
+
+
+def can_delete_project(user, project):
+    if not user.is_authenticated:
+        return False
+    if project.owner_id == user.id:
+        return True
+    return is_admin_role(user)
 
 
 def get_user_projects(user):
@@ -144,8 +153,21 @@ def can_edit_task_progress(user, task):
     return task.can_update_status(user)
 
 
+def can_delete_task(user, task):
+    if not user.is_authenticated:
+        return False
+    return is_admin_role(user)
+
+
+def can_view_all_activity_feed(user):
+    return is_admin_role(user) or has_role(user, "content") or has_role(user, "pm")
+
+
 def build_dashboard_activity_feed(user, limit=20):
-    task_ids = list(get_user_tasks(user).values_list("pk", flat=True))
+    if can_view_all_activity_feed(user):
+        task_ids = list(Task.objects.values_list("pk", flat=True))
+    else:
+        task_ids = list(get_user_tasks(user).values_list("pk", flat=True))
     if not task_ids:
         return []
 
@@ -261,6 +283,7 @@ def home(request):
         "projects/home.html",
         {
             "activity_feed": activity_feed,
+            "activity_feed_global": can_view_all_activity_feed(request.user),
         },
     )
 
@@ -281,6 +304,7 @@ def project_list(request):
     projects = list(get_user_projects(request.user))
     for project in projects:
         project.can_edit = can_edit_project(request.user, project)
+        project.can_delete = can_delete_project(request.user, project)
     return render(
         request,
         "projects/project_list.html",
@@ -295,7 +319,7 @@ def project_list(request):
 @login_required
 def project_create(request):
     if not can_manage_projects(request.user):
-        return forbidden_response(request, "Only admins or moderators can create projects.")
+        return forbidden_response(request, "Only admins, moderators, content, or pm can create projects.")
     form = ProjectForm(request.POST or None)
     if form.is_valid():
         project = form.save(commit=False)
@@ -310,7 +334,7 @@ def project_create(request):
 def project_update(request, pk):
     project = get_object_or_404(Project, pk=pk)
     if not can_edit_project(request.user, project):
-        return forbidden_response(request, "Only admin, content, or owner can edit this project.")
+        return forbidden_response(request, "Only admin, content, pm, or owner can edit this project.")
     form = ProjectForm(request.POST or None, instance=project)
     if form.is_valid():
         form.save()
@@ -321,8 +345,8 @@ def project_update(request, pk):
 @login_required
 def project_delete(request, pk):
     project = get_object_or_404(Project, pk=pk)
-    if not can_edit_project(request.user, project):
-        return forbidden_response(request, "Only admin, content, or owner can delete this project.")
+    if not can_delete_project(request.user, project):
+        return forbidden_response(request, "Only admin or owner can delete this project.")
 
     delete_blocked = False
     if request.method == "POST":
@@ -359,6 +383,7 @@ def project_detail(request, pk):
             "project": project,
             "tasks": tasks,
             "can_edit_project": can_edit_project(request.user, project),
+            "can_delete_project": can_delete_project(request.user, project),
             "show_visibility_status": is_admin_role(request.user),
         },
     )
@@ -546,7 +571,7 @@ def task_list(request):
     tasks = list(tasks)
     for task in tasks:
         task.can_edit = can_edit_task(request.user, task)
-        task.can_delete = is_admin_role(request.user)
+        task.can_delete = can_delete_task(request.user, task)
 
     executors = User.objects.filter(
         assigned_tasks__isnull=False
@@ -589,7 +614,7 @@ def task_detail(request, pk):
             "task": task,
             "can_edit_task": can_edit_task(request.user, task),
             "can_edit_task_progress": can_edit_task_progress(request.user, task),
-            "can_delete_task": is_admin_role(request.user),
+            "can_delete_task": can_delete_task(request.user, task),
             "show_visibility_status": is_admin_role(request.user),
             "activities": activities,
             "comments": comments,
@@ -611,7 +636,7 @@ def add_task_comment(request, pk):
     if not text:
         return JsonResponse({"ok": False, "error": "Comment text cannot be empty."}, status=400)
 
-    Comment.objects.create(task=task, user=request.user, text=text)
+    Comment.objects.create(task=task, user=request.user, text=sanitize_rich_text(text))
     comments = task.comments.select_related("user")
     comments_html = render_to_string(
         "projects/_task_comments.html",
@@ -648,7 +673,10 @@ def task_create(request):
         return forbidden_response(request, "Executors cannot create tasks.")
     form = TaskForm(request.POST or None)
     if form.is_valid():
-        form.save()
+        task = form.save(commit=False)
+        task.owner = request.user
+        task.save()
+        form.save_m2m()
         return redirect("task_list")
     return render(request, "projects/task_form.html", {"form": form, "form_title": "Create Task"})
 
@@ -667,9 +695,9 @@ def task_update(request, pk):
 
 @login_required
 def task_delete(request, pk):
-    if not is_admin_role(request.user):
-        return forbidden_response(request, "Only admins can delete tasks.")
     task = get_object_or_404(Task, pk=pk)
+    if not can_delete_task(request.user, task):
+        return forbidden_response(request, "Only admins can delete tasks.")
     if request.method == "POST":
         task.delete()
         return redirect("task_list")

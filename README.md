@@ -2,7 +2,7 @@
 
 Проект — минимальный проектный менеджер на Django с Kanban-доской, CRUD для проектов/задач/пользователей и Single-Container инфраструктурой на Docker.
 
-Этот репозиторий содержит рабочий прототип. Внизу есть подробный анализ проекта и рекомендации в [ANALYSIS.md](ANALYSIS.md).
+Этот репозиторий содержит рабочий прототип. Внизу есть подробный анализ проекта и рекомендации в [docs/analysis.md](docs/analysis.md).
 
 ## Краткий обзор
 
@@ -16,7 +16,7 @@
 - `supervisord.conf` — запуск `gunicorn` + `nginx`
 - `nginx.conf` — проксирование и выдача `static`/`media`
 - `manage.py` — Django CLI
-- `crm_local/` — настройки, URLs, WSGI
+- `core/` — настройки, URLs, WSGI
 - `projects/` — основное приложение: модели, формы, представления, шаблоны, static
 
 ## Быстрый локальный запуск (Windows)
@@ -74,17 +74,17 @@ docker run -d --name crm-local-mvp \
 - Представления и логика UI: [projects/views.py](projects/views.py)
 - Формы: [projects/forms.py](projects/forms.py)
 - URL-маршруты: [projects/urls.py](projects/urls.py)
-- Настройки: [crm_local/settings.py](crm_local/settings.py)
+- Настройки: [core/settings.py](core/settings.py)
 
 ## Короткие рекомендации
 
-- Убрать `SECRET_KEY` из `settings.py` и загружать из окружения.
+- Убрать `SECRET_KEY` из `core/settings.py` и загружать из окружения.
 - Переключить на PostgreSQL для продакшн; не хранить prod данные в SQLite.
 - В `Dockerfile` и `requirements.txt` — зафиксировать версии зависимостей и добавить `pip-tools`/`constraints.txt`.
 - Отключать `DEBUG` в продакшне и правильно настроить `ALLOWED_HOSTS`.
 - Добавить тесты (pytest-django), линтер (ruff/flake8) и pre-commit hooks.
 
-Полный анализ с деталями, проблемами и шагами исправления — в [ANALYSIS.md](ANALYSIS.md).
+Полный анализ с деталями, проблемами и шагами исправления — в [docs/analysis.md](docs/analysis.md).
 
 ## Переменные окружения
 
@@ -96,7 +96,7 @@ docker run -d --name crm-local-mvp \
 - `ALLOWED_HOSTS` — список хостов через запятую (для продакшн)
 - `PORT` — порт запуска приложения в контейнере (по умолчанию `9090`)
 
-В `crm_local/settings.py` рекомендуется использовать чтение через `os.environ` или `django-environ`.
+В `core/settings.py` рекомендуется использовать чтение через `os.environ` или `django-environ`.
 
 ## Тесты
 
@@ -125,7 +125,7 @@ pytest -q
 
 ## Вклад и стиль кода
 
-См. `CONTRIBUTING.md` для правил оформления PR, линтинга и тестов.
+См. [docs/contributing.md](docs/contributing.md) для правил оформления PR, линтинга и тестов.
 
 ---
 

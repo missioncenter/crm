@@ -33,13 +33,15 @@
             <td><span class="badge{% if project.hidden %} badge-danger{% endif %}">{{ project.hidden|yesno:"Hidden,Published" }}</span></td>
             {% endif %}
             <td>
-                <a href="{% url 'project_detail' project.pk %}">View</a>
-                {% if project.can_edit %}
-                <span class="project-action-separator">|</span>
-                <a href="{% url 'project_update' project.pk %}">Edit</a>
-                <span class="project-action-separator">|</span>
-                <a href="{% url 'project_delete' project.pk %}">Delete</a>
-                {% endif %}
+                <span class="table-actions">
+                    <a class="table-action-icon" href="{% url 'project_detail' project.pk %}" title="View project" aria-label="View project"><span aria-hidden="true">👁</span><span class="sr-only">View project</span></a>
+                    {% if project.can_edit %}
+                    <a class="table-action-icon" href="{% url 'project_update' project.pk %}" title="Edit project" aria-label="Edit project"><span aria-hidden="true">✎</span><span class="sr-only">Edit project</span></a>
+                    {% endif %}
+                    {% if project.can_delete %}
+                    <a class="table-action-icon table-action-icon--danger" href="{% url 'project_delete' project.pk %}" title="Delete project" aria-label="Delete project"><span aria-hidden="true">🗑</span><span class="sr-only">Delete project</span></a>
+                    {% endif %}
+                </span>
             </td>
         </tr>
         {% empty %}

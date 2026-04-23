@@ -23,8 +23,10 @@
             <td>{{ group.name }}</td>
             <td>{{ group.user_set.count }}</td>
             <td>
-                <a href="{% url 'group_update' group.pk %}">Edit</a>
-                <a href="{% url 'group_delete' group.pk %}">Delete</a>
+                <span class="table-actions">
+                    <a class="table-action-icon" href="{% url 'group_update' group.pk %}" title="Edit group" aria-label="Edit group"><span aria-hidden="true">✎</span><span class="sr-only">Edit group</span></a>
+                    <a class="table-action-icon table-action-icon--danger" href="{% url 'group_delete' group.pk %}" title="Delete group" aria-label="Delete group"><span aria-hidden="true">🗑</span><span class="sr-only">Delete group</span></a>
+                </span>
             </td>
         </tr>
         {% empty %}

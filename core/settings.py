@@ -27,7 +27,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "crm_local.urls"
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
@@ -45,7 +45,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "crm_local.wsgi.application"
+WSGI_APPLICATION = "core.wsgi.application"
 
 DATABASES = {
     "default": {

@@ -18,9 +18,31 @@
     </div>
     {% endif %}
     {% for field in form %}
-    <div class="field-group{% if field.errors %} field-group--error{% endif %}">
+    <div class="field-group{% if field.errors %} field-group--error{% endif %}{% if field.field.widget.input_type == 'checkbox' %} field-group--inline{% endif %}">
         {{ field.label_tag }}
+        {% if field.name == 'description' %}
+        <div class="wysiwyg-field" data-wysiwyg-field>
+            <div class="wysiwyg-toolbar" data-wysiwyg-toolbar>
+                <button type="button" data-wysiwyg-command="bold"><span class="wysiwyg-icon" aria-hidden="true">𝐁</span><span class="sr-only">Bold</span></button>
+                <button type="button" data-wysiwyg-command="italic"><span class="wysiwyg-icon" aria-hidden="true">𝐼</span><span class="sr-only">Italic</span></button>
+                <button type="button" data-wysiwyg-command="underline"><span class="wysiwyg-icon" aria-hidden="true">U̲</span><span class="sr-only">Underline</span></button>
+                <button type="button" data-wysiwyg-command="insertUnorderedList"><span class="wysiwyg-icon" aria-hidden="true">•</span><span class="sr-only">Bulleted list</span></button>
+                <button type="button" data-wysiwyg-command="insertOrderedList"><span class="wysiwyg-icon" aria-hidden="true">1.</span><span class="sr-only">Numbered list</span></button>
+                <button type="button" data-wysiwyg-command="justifyLeft"><span class="wysiwyg-icon" aria-hidden="true">⇤</span><span class="sr-only">Align left</span></button>
+                <button type="button" data-wysiwyg-command="justifyCenter"><span class="wysiwyg-icon" aria-hidden="true">↔</span><span class="sr-only">Align center</span></button>
+                <button type="button" data-wysiwyg-command="justifyRight"><span class="wysiwyg-icon" aria-hidden="true">⇥</span><span class="sr-only">Align right</span></button>
+                <button type="button" data-wysiwyg-command="justifyFull"><span class="wysiwyg-icon" aria-hidden="true">☰</span><span class="sr-only">Justify</span></button>
+                <button type="button" data-wysiwyg-command="createLink"><span class="wysiwyg-icon" aria-hidden="true">🔗</span><span class="sr-only">Insert link</span></button>
+                <button type="button" data-wysiwyg-command="unlink"><span class="wysiwyg-icon" aria-hidden="true">⛓</span><span class="sr-only">Remove link</span></button>
+                <button type="button" data-wysiwyg-command="removeFormat"><span class="wysiwyg-icon" aria-hidden="true">⌫</span><span class="sr-only">Clear formatting</span></button>
+            </div>
+            <div class="wysiwyg-editor" contenteditable="true" data-wysiwyg-editor></div>
+            <div class="wysiwyg-hint">Basic browser editor. Use toolbar buttons for formatting.</div>
+            <div class="wysiwyg-source">{{ field }}</div>
+        </div>
+        {% else %}
         {{ field }}
+        {% endif %}
         {% for error in field.errors %}
         <div class="field-error">{{ error }}</div>
         {% endfor %}

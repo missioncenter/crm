@@ -6,7 +6,7 @@
             <strong>{{ comment.user.username }}</strong>
             <span>{{ comment.timestamp|date:"M d, Y H:i" }}</span>
         </div>
-        <div class="task-comment-text">{{ comment.text|linebreaksbr }}</div>
+        <div class="task-comment-text rich-text-content">{{ comment.text|safe }}</div>
     </article>
     {% endfor %}
 </div>

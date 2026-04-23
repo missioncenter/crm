@@ -10,7 +10,7 @@
 ## Обзор найденных артефактов
 
 - Основные директории:
-  - `crm_local/` — настройки и точки входа
+  - `core/` — настройки и точки входа
   - `projects/` — модели, формы, views, templates, static
   - `staticfiles/` — целевая директория для `collectstatic` (настроена в `settings.py`)
 - Docker: `Dockerfile`, `nginx.conf`, `supervisord.conf` присутствуют и обеспечивают single-container запуск
@@ -19,7 +19,7 @@
 ## Основные риски и замечания
 
 1) Секьюрность конфигурации
-- `SECRET_KEY` хранится в `crm_local/settings.py` в явном виде — опасно для публичных репозиториев.
+- `SECRET_KEY` хранится в `core/settings.py` в явном виде — опасно для публичных репозиториев.
 - `DEBUG = True` и `ALLOWED_HOSTS = ["*"]` в настройках — недопустимо для продакшн.
 - Использование SQLite в образе/контейнере не подходит для многопользовательского продакшна.
 
@@ -136,9 +136,9 @@ jobs:
 
 Если хотите, могу автоматически:
 
-- создать `ANALYSIS.md` (сделал),
+- создать `docs/analysis.md` (сделал),
 - добавить пример `.github/workflows/ci.yml`,
 - сгенерировать `docker-compose.yml` и `requirements-dev.txt`,
-- вынести секреты в `crm_local/settings.py` через `django-environ` и добавить `.env.example`.
+- вынести секреты в `core/settings.py` через `django-environ` и добавить `.env.example`.
 
 Напишите, какие из этих действий выполнять автоматически. 

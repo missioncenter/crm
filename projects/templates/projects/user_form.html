@@ -18,7 +18,7 @@
     </div>
     {% endif %}
     {% for field in form %}
-    <div class="field-group{% if field.errors %} field-group--error{% endif %}">
+    <div class="field-group{% if field.errors %} field-group--error{% endif %}{% if field.field.widget.input_type == 'checkbox' %} field-group--inline{% endif %}">
         {{ field.label_tag }}
         {{ field }}
         {% for error in field.errors %}

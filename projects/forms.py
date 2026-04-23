@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.db import models
 
+from .html_sanitizer import sanitize_rich_text
 from .models import Project, Role, Task, TaskStatus
 
 User = get_user_model()
@@ -14,13 +15,13 @@ class UserCreateForm(UserCreationForm):
         label="Member of projects",
         queryset=Project.objects.all(),
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": 6}),
+        widget=forms.SelectMultiple(attrs={"size": 10}),
     )
     roles = forms.ModelMultipleChoiceField(
         label="Roles",
         queryset=Role.objects.all(),
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": 6}),
+        widget=forms.SelectMultiple(attrs={"size": 10}),
     )
 
     class Meta:
@@ -36,8 +37,8 @@ class UserCreateForm(UserCreationForm):
             "roles",
         ]
         widgets = {
-            "groups": forms.SelectMultiple(attrs={"size": 6}),
-            "roles": forms.SelectMultiple(attrs={"size": 6}),
+            "groups": forms.SelectMultiple(attrs={"size": 10}),
+            "roles": forms.SelectMultiple(attrs={"size": 10}),
         }
 
     def save(self, commit=True):
@@ -59,16 +60,19 @@ class RoleForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.all(),
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": 6}),
+        widget=forms.SelectMultiple(attrs={"size": 10}),
     )
 
     class Meta:
         model = Role
         fields = ["name", "description", "users"]
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 4}),
-            "users": forms.SelectMultiple(attrs={"size": 6}),
+            "description": forms.Textarea(attrs={"rows": 4, "data-wysiwyg-textarea": "true"}),
+            "users": forms.SelectMultiple(attrs={"size": 10}),
         }
+
+    def clean_description(self):
+        return sanitize_rich_text(self.cleaned_data.get("description", ""))
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -76,13 +80,13 @@ class UserUpdateForm(forms.ModelForm):
         label="Member of projects",
         queryset=Project.objects.all(),
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": 6}),
+        widget=forms.SelectMultiple(attrs={"size": 10}),
     )
     roles = forms.ModelMultipleChoiceField(
         label="Roles",
         queryset=Role.objects.all(),
         required=False,
-        widget=forms.SelectMultiple(attrs={"size": 6}),
+        widget=forms.SelectMultiple(attrs={"size": 10}),
     )
 
     class Meta:
@@ -98,8 +102,8 @@ class UserUpdateForm(forms.ModelForm):
             "roles",
         ]
         widgets = {
-            "groups": forms.SelectMultiple(attrs={"size": 6}),
-            "roles": forms.SelectMultiple(attrs={"size": 6}),
+            "groups": forms.SelectMultiple(attrs={"size": 10}),
+            "roles": forms.SelectMultiple(attrs={"size": 10}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -121,12 +125,15 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = ["title", "description", "members", "hidden"]
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 4}),
-            "members": forms.SelectMultiple(attrs={"size": 6}),
+            "description": forms.Textarea(attrs={"rows": 4, "data-wysiwyg-textarea": "true"}),
+            "members": forms.SelectMultiple(attrs={"size": 10}),
         }
         labels = {
             "hidden": "Hidden",
         }
+
+    def clean_description(self):
+        return sanitize_rich_text(self.cleaned_data.get("description", ""))
 
 
 class TaskForm(forms.ModelForm):
@@ -144,16 +151,19 @@ class TaskForm(forms.ModelForm):
             "hidden",
         ]
         widgets = {
-            "description": forms.Textarea(attrs={"rows": 4}),
+            "description": forms.Textarea(attrs={"rows": 4, "data-wysiwyg-textarea": "true"}),
             "deadline": forms.DateInput(attrs={"type": "date"}),
             "progress": forms.NumberInput(attrs={"min": 0, "max": 100, "step": 1}),
-            "co_executors": forms.SelectMultiple(attrs={"size": 6}),
+            "co_executors": forms.SelectMultiple(attrs={"size": 10}),
         }
         labels = {
             "co_executors": "Co-executors",
             "hidden": "Hidden",
             "progress": "Progress",
         }
+
+    def clean_description(self):
+        return sanitize_rich_text(self.cleaned_data.get("description", ""))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
