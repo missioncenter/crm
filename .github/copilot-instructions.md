@@ -64,115 +64,29 @@ CRM Local MVP построен как минимальный аналог Bitrix
 
 ## Локальный запуск на Windows 11
 
-1. Откройте PowerShell в папке проекта.
-2. Создайте виртуальное среду:
+# CRM Local — Copilot instructions
 
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
+Кратко: проект — минимальный проектный менеджер на Django (app: `projects`).
 
-3. Установите зависимости:
+Что изменено недавно:
+- Добавлен `.gitignore`.
+- Обновлён `README.md` с кратким обзором.
+- Добавлен `ANALYSIS.md` с глубоким анализом и рекомендациями.
 
-```powershell
-pip install -r requirements.txt
-```
+Советы для Copilot (коротко):
+- При изменениях конфигурации рекомендовать вынос секретов в переменные окружения и использование `.env.example`.
+- Для изменений Docker/CI предлагать `docker-compose.yml` и пример `.github/workflows/ci.yml`.
+- Для изменений кода — предлагать тесты (pytest-django) и pre-commit hooks.
 
-4. Выполните миграции:
+Полезные места в репозитории:
+- `crm_local/settings.py` — настройки проекта
+- `projects/models.py`, `projects/views.py`, `projects/forms.py` — основная логика
+- `Dockerfile`, `supervisord.conf`, `nginx.conf` — контейнер/сервер
 
-```powershell
-python manage.py migrate
-```
+Если нужно, могу автоматически добавить:
+- `docker-compose.yml` (web + postgres + nginx),
+- `.github/workflows/ci.yml` (тесты + lint),
+- `.env.example` и изменения в `settings.py` для загрузки из окружения.
 
-5. Создайте суперпользователя:
+Оставьте пожелания — выполню автоматически.
 
-```powershell
-python manage.py createsuperuser
-```
-
-6. Запустите сервер:
-
-```powershell
-python manage.py runserver 9090
-```
-
-7. Откройте в браузере:
-
-- `http://127.0.0.1:9090/`
-- `http://127.0.0.1:9090/projects/`
-- `http://127.0.0.1:9090/tasks/`
-- `http://127.0.0.1:9090/users/`
-- `http://127.0.0.1:9090/groups/`
-- `http://127.0.0.1:9090/calendar/`
-- `http://127.0.0.1:9090/accounts/login/`
-
-## Docker-сборка и запуск
-
-Соберите образ:
-
-```powershell
-docker build -t crm-local-mvp .
-```
-
-Запустите контейнер с томами для базы и медиа:
-
-```powershell
-docker run -d --name crm-local-mvp \
-  -p 9090:9090 \
-  -v "%cd%\db.sqlite3:/app/db.sqlite3" \
-  -v "%cd%\media:/app/media" \
-  crm-local-mvp
-```
-
-> В PowerShell можно также использовать `${PWD}` вместо `%cd%`.
-
-## Настройка статики
-
-В `Dockerfile` выполняется:
-
-```dockerfile
-RUN python manage.py collectstatic --noinput
-```
-
-После этого `nginx` обслуживает статику из `/app/staticfiles`.
-
-## Маршруты и страницы
-
-- `/` — дашборд Kanban + статистика
-- `/projects/` — список проектов
-- `/projects/create/` — создание проекта
-- `/projects/<id>/edit/` — редактирование проекта
-- `/projects/<id>/delete/` — удаление проекта
-- `/tasks/` — список задач
-- `/tasks/create/` — создание задачи
-- `/tasks/<id>/edit/` — редактирование задачи
-- `/tasks/<id>/delete/` — удаление задачи
-- `/calendar/` — календарный просмотр задач
-- `/users/` — список пользователей
-- `/users/create/` — создание пользователя
-- `/users/<id>/edit/` — редактирование пользователя
-- `/users/<id>/delete/` — удаление пользователя
-- `/groups/` — список групп
-- `/groups/create/` — создание группы
-- `/groups/<id>/edit/` — редактирование группы
-- `/groups/<id>/delete/` — удаление группы
-- `/accounts/login/` — вход
-- `/accounts/logout/` — выход
-
-## Роли и права
-
-- `Admins` и `staff`:
-  - управляют проектами, задачами, группами и пользователями
-- Исполнители и со-исполнители:
-  - могут менять статус задач
-- `Project.owner` и участники проекта:
-  - могут видеть задачи и участвовать в работе
-- `overdue` задачи помечаются автоматически, если дедлайн прошёл, а статус не `Done`
-
-## Что ещё можно сделать
-
-- добавить поиск и фильтрацию задач по проекту, исполнителю и статусу
-- вынести страницу логина в отдельный шаблон `registration/login.html` с кастомным дизайном
-- добавить загрузку файлов для задач и проектов
-- подключить внешнюю базу данных PostgreSQL для продакшн-развёртывания
-- добавить Docker Compose для удобного локального развёртывания

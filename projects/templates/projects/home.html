@@ -1,0 +1,50 @@
+{% extends "projects/base.html" %}
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    brand: "#1565c0",
+                    ink: "#1c1b1e",
+                },
+            },
+        },
+    };
+</script>
+{% endblock %}
+{% block page_header %}
+<div class="page-header">
+    <div>
+        <h1>Global Activity Feed</h1>
+        <p style="margin:0; font-size:0.85rem; color:var(--md-on-surface-muted);">Latest updates and comments from tasks you can access.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{% url 'dashboard' %}" class="button secondary">Open Kanban</a>
+    </div>
+</div>
+{% endblock %}
+{% block content %}
+<section class="mb-6" data-activity-feed-root data-activity-feed-url="{% url 'dashboard_activity_feed' %}">
+    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+            <div>
+                <h2 class="text-base font-semibold text-slate-900">Global Activity Feed</h2>
+                <p class="mt-1 text-sm text-slate-500">Latest updates and comments from tasks you can access.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs text-slate-500" data-activity-feed-updated-at></span>
+                <button type="button" class="inline-flex h-9 items-center rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100" data-activity-feed-refresh>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="px-5 py-5">
+            <div id="global-activity-feed">
+                {% include "projects/_dashboard_activity_feed.html" with activity_feed=activity_feed %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

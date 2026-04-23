@@ -1,29 +1,54 @@
 {% extends "projects/base.html" %}
+{% block page_header %}
+<div class="page-header">
+    <div style="display:flex; align-items:center; gap:16px;">
+        <a class="button secondary" href="?month={{ prev }}">&#8249;</a>
+        <h1 style="margin:0; min-width:220px; text-align:center;">{{ month_name }} {{ year }}</h1>
+        <a class="button secondary" href="?month={{ next }}">&#8250;</a>
+    </div>
+    <div class="page-actions">
+        <a class="button secondary" href="?month={{ today|date:'Y-m' }}">Today</a>
+        <a class="button" href="{% url 'task_create' %}">Create Task</a>
+    </div>
+</div>
+{% endblock %}
 {% block content %}
-<h1>Calendar</h1>
-<div class="calendar-grid">
-    {% for date, items in calendar.items %}
-    <section class="calendar-day">
-        <h2>{{ date }}</h2>
-        <ul>
-            {% for task in items %}
-            <li class="{% if task.is_overdue %}overdue{% endif %}">
-                <strong>{{ task.title }}</strong> — {{ task.project.title }}
-                <span>{{ task.get_status_display }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-    </section>
+
+<div class="big-calendar">
+    <div class="cal-header-row">
+        {% for wd in weekday_names %}
+        <div class="cal-header-cell {% if forloop.counter >= 6 %}weekend{% endif %}">{{ wd }}</div>
+        {% endfor %}
+    </div>
+
+    {% for week in weeks %}
+    <div class="cal-week">
+        {% for cell in week %}
+        <div class="cal-day {% if not cell.in_month %}cal-day--other{% endif %} {% if cell.is_today %}cal-day--today{% endif %}">
+            <div class="cal-day-number">{{ cell.date.day }}</div>
+            <div class="cal-task-list">
+                {% for task in cell.tasks %}
+                <a href="{% url 'task_detail' task.pk %}" class="cal-task-chip cal-status-{{ task.status }} {% if task.is_overdue %}cal-task--overdue{% endif %}" title="{{ task.title }} — {{ task.project.title }}">
+                    {{ task.title|truncatechars:30 }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% endfor %}
 </div>
+
 {% if no_deadline %}
-<section class="calendar-day">
-    <h2>No deadline</h2>
-    <ul>
+<div class="card-section" style="margin-top:24px;">
+    <h2 style="margin-bottom:12px;">No deadline</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:6px;">
         {% for task in no_deadline %}
-        <li>{{ task.title }} — {{ task.project.title }}</li>
+        <a href="{% url 'task_detail' task.pk %}" class="cal-task-chip cal-status-{{ task.status }}" title="{{ task.title }} — {{ task.project.title }}">
+            {{ task.title|truncatechars:30 }}
+        </a>
         {% endfor %}
-    </ul>
-</section>
+    </div>
+</div>
 {% endif %}
 {% endblock %}

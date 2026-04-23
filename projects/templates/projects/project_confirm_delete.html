@@ -1,10 +1,26 @@
 {% extends "projects/base.html" %}
+{% block page_header %}
+<div class="page-header">
+    <h1>Delete Project</h1>
+</div>
+{% endblock %}
 {% block content %}
-<h1>Delete Project</h1>
-<p>Are you sure you want to delete project "{{ project.title }}"?</p>
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Confirm delete</button>
-    <a href="{% url 'project_list' %}">Cancel</a>
-</form>
+<div class="confirm-page">
+    <div class="confirm-card">
+        <h1>Delete Project</h1>
+        <p>Are you sure you want to delete project "{{ project.title }}"?</p>
+        {% if delete_blocked %}
+        <div class="form-errors">
+            <strong>Project deletion blocked.</strong>
+            <p>This project contains tasks and cannot be deleted until they are removed or moved.</p>
+        </div>
+        {% endif %}
+        <form method="post" class="confirm-actions">
+            {% csrf_token %}
+            <button type="submit" class="button danger"{% if delete_blocked %} disabled{% endif %}>Delete project</button>
+            <a class="button secondary" href="{% url 'project_detail' project.pk %}">Back to project</a>
+            <a class="button secondary" href="{% url 'project_list' %}">Back to list</a>
+        </form>
+    </div>
+</div>
 {% endblock %}

@@ -1,78 +1,28 @@
 # CRM Local MVP
 
-Проект представляет собой минимальный проектный менеджер на Django с Kanban-доской, CRUD для проектов, задач, пользователей и групп, а также Single-Container инфраструктурой на Docker.
+Проект — минимальный проектный менеджер на Django с Kanban-доской, CRUD для проектов/задач/пользователей и Single-Container инфраструктурой на Docker.
 
-## Обзор
+Этот репозиторий содержит рабочий прототип. Внизу есть подробный анализ проекта и рекомендации в [ANALYSIS.md](ANALYSIS.md).
 
-CRM Local MVP построен как минимальный аналог Bitrix24:
+## Краткий обзор
 
-- Django + SQLite
-- Nginx + Gunicorn, управляемые supervisord
-- Статическая сборка через `collectstatic`
-- Kanban-интерфейс с drag-and-drop и AJAX-обновлением
-- Пользователи, группы, проекты, задачи и календарь
+- Стек: Django + SQLite (по умолчанию), Nginx + Gunicorn под supervisord
+- Статические файлы собираются через `collectstatic` в `staticfiles/`
+- Канбан-интерфейс реализован в `projects` (JS + AJAX)
 
-## Что реализовано
-
-- `Project`:
-  - `title`, `description`
-  - `owner`, `members`
-- `Task`:
-  - `title`, `description`, `status`, `deadline`
-  - `project`, `executor`, `co_executors`
-- `Calendar`:
-  - просмотр задач по дедлайнам
-  - отдельная секция для задач без дедлайна
-- `Role`:
-  - отдельная сущность ролей внутри проекта
-  - `admin`, `moderator`, `executor` и другие роли
-  - у пользователя может быть несколько ролей
-- Роли и права:
-  - `admin` может создавать проекты, роли и пользователей (кроме других админов)
-  - `moderator` может создавать и редактировать проекты, но не управлять пользователями
-  - `executor` может работать над задачами, но не создавать проекты и не редактировать название проекта
-  - `Admins` и `staff` также сохраняют доступ к управлению классическими CRUD-страницами
-  - исполнители и со-исполнители могут менять статус задач
-  - `overdue` пометки для просроченных задач
-- UI:
-  - главная Kanban-доска
-  - статистика на дашборде: проекты, группы, пользователи, задачи, просроченные
-  - Material-подобный дизайн
-  - логин-страница без шапки и меню
-- CRUD:
-  - `Projects`, `Tasks`, `Users`, `Groups`
-- Аутентификация:
-  - вход через `/accounts/login/`
-  - выход через `/accounts/logout/` с редиректом на логин
-
-## Структура проекта
+## Структура проекта (основное)
 
 - `Dockerfile` — образ на `python:3.12-slim`
-- `supervisord.conf` — управление `gunicorn` и `nginx`
-- `nginx.conf` — проксирование на порт `8000` и выдача `static`/`media`
+- `supervisord.conf` — запуск `gunicorn` + `nginx`
+- `nginx.conf` — проксирование и выдача `static`/`media`
 - `manage.py` — Django CLI
-- `crm_local/` — основной Django проект
-- `projects/` — приложение бизнес-логики
-- `projects/static/` — CSS/JS, включая SortableJS для Kanban
-- `projects/templates/` — шаблоны страниц
-- `media/` — директория для загруженных файлов
+- `crm_local/` — настройки, URLs, WSGI
+- `projects/` — основное приложение: модели, формы, представления, шаблоны, static
 
-## Важные файлы
+## Быстрый локальный запуск (Windows)
 
-- `crm_local/settings.py`
-- `crm_local/urls.py`
-- `supervisord.conf`
-- `nginx.conf`
-- `Dockerfile`
-- `projects/models.py`
-- `projects/views.py`
-- `projects/forms.py`
-- `projects/admin.py`
-
-## Локальный запуск на Windows 11
-
-1. Откройте PowerShell в папке проекта.
-2. Создайте виртуальное среду:
+1. Откройте PowerShell в корне проекта.
+2. Создайте виртуальную среду:
 
 ```powershell
 py -3.12 -m venv .venv
@@ -85,35 +35,22 @@ py -3.12 -m venv .venv
 pip install -r requirements.txt
 ```
 
-4. Выполните миграции:
+4. Выполните миграции и создайте суперпользователя:
 
 ```powershell
 python manage.py migrate
-```
-
-5. Создайте суперпользователя:
-
-```powershell
 python manage.py createsuperuser
 ```
 
-6. Запустите сервер:
+5. Запустите локально (dev):
 
 ```powershell
 python manage.py runserver 9090
 ```
 
-7. Откройте в браузере:
+6. Откройте в браузере `http://127.0.0.1:9090/`.
 
-- `http://127.0.0.1:9090/`
-- `http://127.0.0.1:9090/projects/`
-- `http://127.0.0.1:9090/tasks/`
-- `http://127.0.0.1:9090/users/`
-- `http://127.0.0.1:9090/groups/`
-- `http://127.0.0.1:9090/calendar/`
-- `http://127.0.0.1:9090/accounts/login/`
-
-## Docker-сборка и запуск
+## Docker (сборка и запуск)
 
 Соберите образ:
 
@@ -121,7 +58,7 @@ python manage.py runserver 9090
 docker build -t crm-local-mvp .
 ```
 
-Запустите контейнер с томами для базы и медиа:
+Запустите контейнер:
 
 ```powershell
 docker run -d --name crm-local-mvp \
@@ -131,59 +68,65 @@ docker run -d --name crm-local-mvp \
   crm-local-mvp
 ```
 
-> В PowerShell можно также использовать `${PWD}` вместо `%cd%`.
+## Куда смотреть в коде
 
-## Настройка статики
+- Основные модели и права: [projects/models.py](projects/models.py)
+- Представления и логика UI: [projects/views.py](projects/views.py)
+- Формы: [projects/forms.py](projects/forms.py)
+- URL-маршруты: [projects/urls.py](projects/urls.py)
+- Настройки: [crm_local/settings.py](crm_local/settings.py)
 
-В `Dockerfile` выполняется:
+## Короткие рекомендации
 
-```dockerfile
-RUN python manage.py collectstatic --noinput
+- Убрать `SECRET_KEY` из `settings.py` и загружать из окружения.
+- Переключить на PostgreSQL для продакшн; не хранить prod данные в SQLite.
+- В `Dockerfile` и `requirements.txt` — зафиксировать версии зависимостей и добавить `pip-tools`/`constraints.txt`.
+- Отключать `DEBUG` в продакшне и правильно настроить `ALLOWED_HOSTS`.
+- Добавить тесты (pytest-django), линтер (ruff/flake8) и pre-commit hooks.
+
+Полный анализ с деталями, проблемами и шагами исправления — в [ANALYSIS.md](ANALYSIS.md).
+
+## Переменные окружения
+
+Для удобства и безопасности приложение должно считывать конфигурацию из окружения. Рекомендуемые переменные (пример в `.env.example`):
+
+- `DJANGO_SECRET_KEY` — секретный ключ Django (обязательно для продакшна)
+- `DJANGO_DEBUG` — `1` или `0` (по умолчанию для локальной разработки можно `1`)
+- `DATABASE_URL` — URL базы данных (например `sqlite:///db.sqlite3` или `postgres://...`)
+- `ALLOWED_HOSTS` — список хостов через запятую (для продакшн)
+- `PORT` — порт запуска приложения в контейнере (по умолчанию `9090`)
+
+В `crm_local/settings.py` рекомендуется использовать чтение через `os.environ` или `django-environ`.
+
+## Тесты
+
+Проекта пока нет тестов. Рекомендации для добавления тестовой среды:
+
+- Установить `pytest` и `pytest-django`.
+- Создать `pytest.ini` с настройками Django-проекта.
+- Добавлять простые unit/functional тесты для моделей и view.
+
+Запуск (после установки тест-зависимостей):
+
+```powershell
+pip install pytest pytest-django
+pytest -q
 ```
 
-После этого `nginx` обслуживает статику из `/app/staticfiles`.
+## Разработка
 
-## Маршруты и страницы
+Локальные шаги для разработки и отладки:
 
-- `/` — дашборд Kanban + статистика
-- `/projects/` — список проектов
-- `/projects/create/` — создание проекта
-- `/projects/<id>/edit/` — редактирование проекта
-- `/projects/<id>/delete/` — удаление проекта
-- `/tasks/` — список задач
-- `/tasks/create/` — создание задачи
-- `/tasks/<id>/edit/` — редактирование задачи
-- `/tasks/<id>/delete/` — удаление задачи
-- `/calendar/` — календарный просмотр задач
-- `/users/` — список пользователей
-- `/users/create/` — создание пользователя
-- `/users/<id>/edit/` — редактирование пользователя
-- `/users/<id>/delete/` — удаление пользователя
-- `/groups/` — список групп
-- `/groups/create/` — создание группы
-- `/groups/<id>/edit/` — редактирование группы
-- `/groups/<id>/delete/` — удаление группы
-- `/roles/` — список ролей
-- `/roles/create/` — создание роли
-- `/roles/<id>/edit/` — редактирование роли
-- `/roles/<id>/delete/` — удаление роли
-- `/accounts/login/` — вход
-- `/accounts/logout/` — выход
+1. Создать виртуальное окружение и установить зависимости (см. выше).
+2. Экспортировать переменные окружения или создать `.env` на основе `.env.example`.
+3. Выполнить миграции: `python manage.py migrate`.
+4. Создать суперпользователя: `python manage.py createsuperuser`.
+5. Запуск сервера разработки: `python manage.py runserver 0.0.0.0:9090`.
 
-## Роли и права
+## Вклад и стиль кода
 
-- `Admins` и `staff`:
-  - управляют проектами, задачами, группами и пользователями
-- Исполнители и со-исполнители:
-  - могут менять статус задач
-- `Project.owner` и участники проекта:
-  - могут видеть задачи и участвовать в работе
-- `overdue` задачи помечаются автоматически, если дедлайн прошёл, а статус не `Done`
+См. `CONTRIBUTING.md` для правил оформления PR, линтинга и тестов.
 
-## Что ещё можно сделать
+---
 
-- добавить поиск и фильтрацию задач по проекту, исполнителю и статусу
-- вынести страницу логина в отдельный шаблон `registration/login.html` с кастомным дизайном
-- добавить загрузку файлов для задач и проектов
-- подключить внешнюю базу данных PostgreSQL для продакшн-развёртывания
-- добавить Docker Compose для удобного локального развёртывания
+Если нужно, могу сформировать `docker-compose.yml`, CI workflow и шаблон `.env`.

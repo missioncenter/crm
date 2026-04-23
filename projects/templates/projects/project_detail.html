@@ -1,0 +1,90 @@
+{% extends "projects/base.html" %}
+{% block page_header %}
+<div class="page-header">
+    <div>
+        <h1 style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">{{ project.title }}{% if show_visibility_status %}<span class="badge{% if project.hidden %} badge-danger{% endif %}">{{ project.hidden|yesno:"Hidden,Published" }}</span>{% endif %}</h1>
+        <p class="subtitle" style="margin:0; font-size:0.85rem; color:var(--md-on-surface-muted);">Owned by {{ project.owner.username }} &bull; {{ project.members.count }} members</p>
+    </div>
+    <div class="page-actions">
+        {% if can_edit_project %}
+            <a class="button" href="{% url 'project_update' project.pk %}">Edit</a>
+            <a class="button danger" href="{% url 'project_delete' project.pk %}">Delete</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block content %}
+
+    <section class="card-section">
+        <h2>Description</h2>
+        <p>{{ project.description|default:'No description provided.' }}</p>
+    </section>
+
+    <section class="card-section">
+        <div class="section-header">
+            <h2>Project Timeline</h2>
+            <span class="badge {% if project.days_until_deadline is not None and project.days_until_deadline < 0 %}badge-danger{% endif %}">{{ project.deadline_label }}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">End date</span>
+            <span class="value">{% if project.deadline %}{{ project.deadline|date:"M d, Y" }}{% else %}Not set{% endif %}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Days remaining</span>
+            <span class="value">
+                {% if project.days_until_deadline is not None %}
+                    {% if project.days_until_deadline < 0 %}
+                        Overdue by {{ project.deadline_days_remaining }} days
+                    {% elif project.days_until_deadline == 0 %}
+                        Today
+                    {% else %}
+                        {{ project.days_until_deadline }} days
+                    {% endif %}
+                {% else %}
+                    —
+                {% endif %}
+            </span>
+        </div>
+        <div class="info-row">
+            <span class="label">Deadline tasks</span>
+            <span class="value">{{ project.deadline_tasks_count }}</span>
+        </div>
+    </section>
+
+    <section class="card-section">
+        <h2>Members</h2>
+        <div class="avatar-list">
+            {% for member in project.members.all %}
+            <span class="avatar-item">{{ member.username }}</span>
+            {% empty %}
+            <p>No members assigned.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="card-section">
+        <div class="section-header">
+            <h2>Tasks</h2>
+            <span class="badge">{{ tasks.count }}</span>
+        </div>
+        {% if tasks %}
+        <div class="task-summary-list">
+            {% for task in tasks %}
+            <article class="task-summary">
+                <div>
+                    <h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a>{% if show_visibility_status %}<span class="badge{% if task.hidden %} badge-danger{% endif %}">{{ task.hidden|yesno:"Hidden,Published" }}</span>{% endif %}</h3>
+                    {% include "projects/_task_progress_bar.html" with progress=task.progress compact=True %}
+                    <p>{{ task.get_status_display }}{% if task.is_overdue %} • <span class="overdue-label">Overdue</span>{% endif %}</p>
+                </div>
+                <div class="task-meta">
+                    <span>{{ task.executor.username|default:'No executor' }}</span>
+                    <span>{{ task.deadline|default:'No deadline' }}</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No tasks yet.</p>
+        {% endif %}
+    </section>
+{% endblock %}

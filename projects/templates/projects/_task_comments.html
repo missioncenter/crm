@@ -1,0 +1,15 @@
+{% if comments %}
+<div class="task-comments-list">
+    {% for comment in comments %}
+    <article class="task-comment-item">
+        <div class="task-comment-meta">
+            <strong>{{ comment.user.username }}</strong>
+            <span>{{ comment.timestamp|date:"M d, Y H:i" }}</span>
+        </div>
+        <div class="task-comment-text">{{ comment.text|linebreaksbr }}</div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p class="task-comments-empty">No comments yet.</p>
+{% endif %}

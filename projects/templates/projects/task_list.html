@@ -1,16 +1,71 @@
 {% extends "projects/base.html" %}
-{% block content %}
-<h1>Tasks</h1>
-<div class="page-actions">
-    <a class="button" href="{% url 'task_create' %}">Create Task</a>
+{% block page_header %}
+<div class="page-header">
+    <h1>Tasks</h1>
+    <div class="page-actions">
+        <a class="button" href="{% url 'task_create' %}">Create Task</a>
+    </div>
 </div>
+{% endblock %}
+{% block content %}
+<div class="card-section task-filters">
+    <form method="get" class="task-filter-form">
+        <div class="filter-grid">
+            <div class="field-group">
+                <label for="project">Project</label>
+                <select id="project" name="project">
+                    <option value="">All projects</option>
+                    {% for project in projects %}
+                    <option value="{{ project.pk }}" {% if filters.project == project.pk|stringformat:'s' %}selected{% endif %}>{{ project.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All statuses</option>
+                    {% for value, label in task_status_choices %}
+                    <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="executor">Executor</label>
+                <select id="executor" name="executor">
+                    <option value="">All executors</option>
+                    {% for ex in executors %}
+                    <option value="{{ ex.pk }}" {% if filters.executor == ex.pk|stringformat:'s' %}selected{% endif %}>{{ ex.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="deadline_from">Deadline from</label>
+                <input id="deadline_from" type="date" name="deadline_from" value="{{ filters.deadline_from }}" />
+            </div>
+            <div class="field-group">
+                <label for="deadline_to">Deadline to</label>
+                <input id="deadline_to" type="date" name="deadline_to" value="{{ filters.deadline_to }}" />
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="button">Apply filters</button>
+            <a class="button secondary" href="{% url 'task_list' %}">Reset</a>
+        </div>
+    </form>
+</div>
+<div class="table-wrap">
 <table class="table-list">
     <thead>
         <tr>
             <th>Title</th>
             <th>Project</th>
             <th>Status</th>
+            <th>Progress</th>
             <th>Executor</th>
+            {% if show_visibility_status %}
+            <th>Visibility</th>
+            {% endif %}
+            <th>Created At</th>
             <th>Deadline</th>
             <th>Actions</th>
         </tr>
@@ -18,21 +73,34 @@
     <tbody>
         {% for task in tasks %}
         <tr class="{% if task.is_overdue %}overdue-row{% endif %}">
-            <td>{{ task.title }}</td>
-            <td>{{ task.project.title }}</td>
-            <td>{{ task.get_status_display }}</td>
+            <td><a href="{% url 'task_detail' task.pk %}">{{ task.title }}</a></td>
+            <td><a href="{% url 'project_detail' task.project.pk %}">{{ task.project.title }}</a></td>
+            <td>{{ task.get_status_display }}{% if task.is_overdue %} • <span class="overdue-label">Overdue</span>{% endif %}</td>
+            <td>{% include "projects/_task_progress_bar.html" with progress=task.progress compact=True %}</td>
             <td>{{ task.executor.username|default:'—' }}</td>
+            {% if show_visibility_status %}
+            <td><span class="badge{% if task.hidden %} badge-danger{% endif %}">{{ task.hidden|yesno:"Hidden,Published" }}</span></td>
+            {% endif %}
+            <td>{{ task.created_at|date:"Y-m-d H:i" }}</td>
             <td>{{ task.deadline|default:'—' }}</td>
             <td>
+                <a href="{% url 'task_detail' task.pk %}">View</a>
+                {% if task.can_edit %}
+                <span class="project-action-separator">|</span>
                 <a href="{% url 'task_update' task.pk %}">Edit</a>
+                {% endif %}
+                {% if task.can_delete %}
+                <span class="project-action-separator">|</span>
                 <a href="{% url 'task_delete' task.pk %}">Delete</a>
+                {% endif %}
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="6">No tasks available.</td>
+            <td colspan="{% if show_visibility_status %}9{% else %}8{% endif %}">No tasks available.</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endblock %}

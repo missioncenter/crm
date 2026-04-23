@@ -1,7 +1,14 @@
 {% extends "projects/base.html" %}
+{% block page_header %}
+<div class="page-header">
+    <h1>Kanban Dashboard</h1>
+    <div class="header-actions">
+        <a href="{% url 'task_create' %}" class="button">Create Task</a>
+    </div>
+</div>
+{% endblock %}
 {% block content %}
-<h1>Kanban Dashboard</h1>
-<div class="stats-grid">
+<div class="stats-grid" style="margin-bottom: 2.5rem;">
     {% for stat in stats %}
     <article class="stat-card">
         <div class="stat-value">{{ stat.value }}</div>
@@ -18,8 +25,9 @@
         </header>
         <div class="task-list" data-status="{{ column.key }}">
             {% for task in column.tasks %}
-            <article class="task-card {% if task.is_overdue %}overdue{% endif %}" data-task-id="{{ task.id }}">
-                <h3>{{ task.title }}</h3>
+            <article class="task-card {% if task.is_overdue %}overdue{% endif %}" data-task-id="{{ task.id }}" data-status="{{ task.status }}">
+                <h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">{{ task.title }}{% if show_visibility_status %}<span class="badge{% if task.hidden %} badge-danger{% endif %}">{{ task.hidden|yesno:"Hidden,Published" }}</span>{% endif %}</h3>
+                {% include "projects/_task_progress_bar.html" with progress=task.dashboard_progress_width compact=True %}
                 <p>{{ task.description|default:"No description" }}</p>
                 <p class="meta">
                     <strong>Project:</strong> {{ task.project.title }}<br />
@@ -30,7 +38,7 @@
                         —
                     {% endif %}
                 </p>
-                <p class="deadline">Deadline: {{ task.deadline|default:"—" }}</p>
+                <p class="deadline {{ task.dashboard_deadline_class }}" style="{{ task.dashboard_deadline_style }}">Deadline: {{ task.deadline|default:"—" }}</p>
             </article>
             {% empty %}
             <div class="empty-state">No tasks</div>

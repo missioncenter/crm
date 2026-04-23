@@ -6,50 +6,75 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CRM Local MVP</title>
+    {% block extra_head %}{% endblock %}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{% static 'projects/css/style.css' %}" />
 </head>
-<body>
-{% block header %}
-<header class="topbar">
-    <div class="container header-inner">
-        <div class="brand">
+<body class="{% block body_class %}app-body{% endblock %}">
+<div class="app-shell">
+    {% block header %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
             <div class="brand-icon">CRM</div>
             <div>
-                <div class="brand-title">CRM Local</div>
-                <div class="brand-subtitle">Project management MVP</div>
+                <div class="brand-title">PROJECTS</div>
             </div>
         </div>
-        <div class="toolbar-group">
-            <nav class="main-nav">
-                <a href="{% url 'dashboard' %}">Dashboard</a>
-                <a href="{% url 'project_list' %}">Projects</a>
-                <a href="{% url 'task_list' %}">Tasks</a>
-                <a href="{% url 'calendar' %}">Calendar</a>
-                {% if user.is_staff or user.is_superuser or user|has_role:'admin' %}
-                    <a href="{% url 'user_list' %}">Users</a>
-                    <a href="{% url 'group_list' %}">Groups</a>
-                    <a href="{% url 'role_list' %}">Roles</a>
-                {% endif %}
-            </nav>
-            <div class="user-panel">
-                {% if user.is_authenticated %}
-                    <span>{{ user.username }}</span>
-                    <a class="text-button" href="{% url 'logout' %}">Logout</a>
-                {% else %}
-                    <a class="text-button" href="{% url 'login' %}">Login</a>
-                {% endif %}
-            </div>
+        <nav class="sidebar-nav">
+            <a class="sidebar-link" href="{% url 'home' %}">
+                <span class="nav-label">Feed</span>
+            </a>
+            <a class="sidebar-link" href="{% url 'dashboard' %}">
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a class="sidebar-link" href="{% url 'project_list' %}">
+                <span class="nav-label">Projects</span>
+            </a>
+            <a class="sidebar-link" href="{% url 'task_list' %}">
+                <span class="nav-label">Tasks</span>
+            </a>
+            <a class="sidebar-link" href="{% url 'calendar' %}">
+                <span class="nav-label">Calendar</span>
+            </a>
+            {% if user.is_staff or user.is_superuser or user|has_role:'admin' %}
+                <div class="nav-divider" style="height: 1px; background: var(--md-surface-variant); margin: 8px 16px;"></div>
+                <a class="sidebar-link" href="{% url 'user_list' %}">
+                    <span class="nav-label">Users</span>
+                </a>
+                <a class="sidebar-link" href="{% url 'group_list' %}">
+                    <span class="nav-label">Groups</span>
+                </a>
+                <a class="sidebar-link" href="{% url 'role_list' %}">
+                    <span class="nav-label">Roles</span>
+                </a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-footer" style="margin-top: auto; padding: 12px;">
+            {% if user.is_authenticated %}
+                <div class="user-info" style="padding: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div class="user-avatar" style="width: 32px; height: 32px; border-radius: 16px; background: var(--md-primary-container); display: flex; align-items: center; justify-content: center; font-weight: 700;">{{ user.username|first|upper }}</div>
+                    <span style="font-weight: 500;">{{ user.username }}</span>
+                </div>
+                <a class="sidebar-link" href="{% url 'logout' %}" style="height: 48px;">Logout</a>
+            {% else %}
+                <a class="sidebar-link" href="{% url 'login' %}">Login</a>
+            {% endif %}
         </div>
+    </aside>
+    {% endblock %}
+
+    <div class="workspace">
+        {% block page_header %}{% endblock %}
+        <main class="workspace-content">
+            <div class="container page-container">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
     </div>
-</header>
-{% endblock %}
-<main class="container">
-    {% block content %}{% endblock %}
-</main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js" integrity="sha512-oGbnN5RSJ+Ke3E2XkKJOiSgXxBCe2w+qZZkY2D8ryrKXMp1oIwxNZ7epJzy4KfO53quSbt3sfS8RfsqL7bs6Rw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="{% static 'projects/js/kanban.js' %}"></script>
 </body>
 </html>

@@ -1,10 +1,19 @@
 {% extends "projects/base.html" %}
+{% block page_header %}
+<div class="page-header">
+    <h1>Delete Group</h1>
+</div>
+{% endblock %}
 {% block content %}
-<h1>Delete Group</h1>
-<p>Are you sure you want to delete group "{{ group.name }}"?</p>
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Confirm delete</button>
-    <a href="{% url 'group_list' %}">Cancel</a>
-</form>
+<div class="confirm-page">
+    <div class="confirm-card">
+        <h1>Delete Group</h1>
+        <p>Are you sure you want to delete group "{{ group.name }}"?</p>
+        <form method="post" class="confirm-actions">
+            {% csrf_token %}
+            <button type="submit" class="button danger">Confirm delete</button>
+            <a class="button secondary" href="{% url 'group_list' %}">Cancel</a>
+        </form>
+    </div>
+</div>
 {% endblock %}

@@ -1,34 +1,53 @@
 {% extends "projects/base.html" %}
-{% block content %}
-<h1>Projects</h1>
-<div class="page-actions">
-    <a class="button" href="{% url 'project_create' %}">Create Project</a>
+{% block page_header %}
+<div class="page-header">
+    <h1>Projects</h1>
+    <div class="page-actions">
+        {% if can_manage_projects %}
+        <a class="button" href="{% url 'project_create' %}">Create Project</a>
+        {% endif %}
+    </div>
 </div>
+{% endblock %}
+{% block content %}
+<div class="table-wrap">
 <table class="table-list">
     <thead>
         <tr>
             <th>Title</th>
             <th>Owner</th>
             <th>Members</th>
+            {% if show_visibility_status %}
+            <th>Visibility</th>
+            {% endif %}
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for project in projects %}
         <tr>
-            <td>{{ project.title }}</td>
+            <td><a href="{% url 'project_detail' project.pk %}">{{ project.title }}</a></td>
             <td>{{ project.owner.username }}</td>
             <td>{{ project.members.count }}</td>
+            {% if show_visibility_status %}
+            <td><span class="badge{% if project.hidden %} badge-danger{% endif %}">{{ project.hidden|yesno:"Hidden,Published" }}</span></td>
+            {% endif %}
             <td>
+                <a href="{% url 'project_detail' project.pk %}">View</a>
+                {% if project.can_edit %}
+                <span class="project-action-separator">|</span>
                 <a href="{% url 'project_update' project.pk %}">Edit</a>
+                <span class="project-action-separator">|</span>
                 <a href="{% url 'project_delete' project.pk %}">Delete</a>
+                {% endif %}
             </td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="4">No projects available.</td>
+            <td colspan="{% if show_visibility_status %}5{% else %}4{% endif %}">No projects available.</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endblock %}

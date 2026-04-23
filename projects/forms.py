@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
+from django.db import models
 
 from .models import Project, Role, Task, TaskStatus
 
@@ -118,10 +119,13 @@ class UserUpdateForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ["title", "description", "owner", "members"]
+        fields = ["title", "description", "members", "hidden"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
             "members": forms.SelectMultiple(attrs={"size": 6}),
+        }
+        labels = {
+            "hidden": "Hidden",
         }
 
 
@@ -133,29 +137,42 @@ class TaskForm(forms.ModelForm):
             "description",
             "status",
             "deadline",
+            "progress",
             "project",
             "executor",
             "co_executors",
+            "hidden",
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4}),
             "deadline": forms.DateInput(attrs={"type": "date"}),
+            "progress": forms.NumberInput(attrs={"min": 0, "max": 100, "step": 1}),
             "co_executors": forms.SelectMultiple(attrs={"size": 6}),
         }
         labels = {
             "co_executors": "Co-executors",
+            "hidden": "Hidden",
+            "progress": "Progress",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        executor_queryset = User.objects.filter(roles__name__iexact="executor").distinct().order_by("username")
+        base_executor = User.objects.filter(roles__name__iexact="executor")
         if self.instance and self.instance.pk and self.instance.executor:
-            executor_queryset = executor_queryset | User.objects.filter(pk=self.instance.executor.pk)
+            executor_queryset = User.objects.filter(
+                models.Q(roles__name__iexact="executor") | models.Q(pk=self.instance.executor.pk)
+            ).distinct().order_by("username")
+        else:
+            executor_queryset = base_executor.distinct().order_by("username")
         self.fields["executor"].queryset = executor_queryset
 
-        co_executor_queryset = User.objects.filter(roles__name__iexact="executor").distinct().order_by("username")
+        base_co_executor = User.objects.filter(roles__name__iexact="executor")
         if self.instance and self.instance.pk:
-            co_executor_queryset = co_executor_queryset | self.instance.co_executors.all()
+            co_executor_queryset = User.objects.filter(
+                models.Q(roles__name__iexact="executor") | models.Q(pk__in=self.instance.co_executors.values_list("pk", flat=True))
+            ).distinct().order_by("username")
+        else:
+            co_executor_queryset = base_co_executor.distinct().order_by("username")
         self.fields["co_executors"].queryset = co_executor_queryset
 
     def clean_executor(self):
@@ -175,3 +192,11 @@ class TaskForm(forms.ModelForm):
                 params={"users": ", ".join(invalid)},
             )
         return co_executors
+
+    def clean_progress(self):
+        progress = self.cleaned_data.get("progress")
+        if progress is None:
+            return 0
+        if progress < 0 or progress > 100:
+            raise forms.ValidationError("Progress must be between 0 and 100.")
+        return progress

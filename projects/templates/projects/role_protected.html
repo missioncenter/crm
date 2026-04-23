@@ -1,0 +1,8 @@
+{% extends "projects/base.html" %}
+{% block content %}
+<div class="alert-card protected-alert">
+    <h1>Role Editing Restricted</h1>
+    <p>The selected role is protected and cannot be edited through this interface.</p>
+    <a class="button" href="{% url 'role_list' %}">Back to Roles</a>
+</div>
+{% endblock %}

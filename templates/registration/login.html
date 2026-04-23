@@ -2,35 +2,44 @@
 
 {% block header %}{% endblock %}
 
+{% block body_class %}auth-body{% endblock %}
+
 {% block content %}
-<div class="auth-page">
-    <div class="auth-card">
-        <h1>Login</h1>
-        <p class="auth-subtitle">Enter your credentials to access the CRM dashboard.</p>
-        <form method="post" class="auth-form">
-            {% csrf_token %}
-            {{ redirect_field_value }}
-            {% if form.non_field_errors %}
-                <div class="form-errors">
-                    {{ form.non_field_errors }}
-                </div>
-            {% endif %}
-            <div class="field-group">
-                {{ form.username.label_tag }}
-                {{ form.username }}
-                {% if form.username.errors %}
-                    <div class="field-error">{{ form.username.errors|striptags }}</div>
-                {% endif %}
-            </div>
-            <div class="field-group">
-                {{ form.password.label_tag }}
-                {{ form.password }}
-                {% if form.password.errors %}
-                    <div class="field-error">{{ form.password.errors|striptags }}</div>
-                {% endif %}
-            </div>
-            <button type="submit" class="button">Login</button>
-        </form>
+<div class="auth-card" style="box-shadow: var(--md-elevation-1); border: 1px solid var(--md-surface-variant);">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div style="width: 56px; height: 56px; background: var(--md-primary); color: white; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.5rem; margin-bottom: 16px;">CRM</div>
+        <h1 style="margin: 0; font-size: 1.75rem; font-weight: 400; color: var(--md-on-surface);">Welcome back</h1>
+        <p style="color: var(--md-on-surface-variant); margin-top: 8px;">Sign in to continue to CRM Local</p>
     </div>
+    
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        {{ redirect_field_value }}
+        
+        {% if form.non_field_errors %}
+            <div style="background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem;">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="field-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; color: var(--md-on-surface-variant);">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div style="color: var(--md-error); font-size: 0.8rem; margin-top: 4px;">{{ form.username.errors|striptags }}</div>
+            {% endif %}
+        </div>
+
+        <div class="field-group" style="margin-bottom: 32px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; color: var(--md-on-surface-variant);">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div style="color: var(--md-error); font-size: 0.8rem; margin-top: 4px;">{{ form.password.errors|striptags }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="button" style="width: 100%; height: 48px; font-size: 1rem;">Sign In</button>
+    </form>
 </div>
 {% endblock %}
+
