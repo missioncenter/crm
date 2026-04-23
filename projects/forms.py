@@ -166,24 +166,57 @@ class TaskForm(forms.ModelForm):
         return sanitize_rich_text(self.cleaned_data.get("description", ""))
 
     def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        base_executor = User.objects.filter(roles__name__iexact="executor")
-        if self.instance and self.instance.pk and self.instance.executor:
-            executor_queryset = User.objects.filter(
-                models.Q(roles__name__iexact="executor") | models.Q(pk=self.instance.executor.pk)
-            ).distinct().order_by("username")
-        else:
-            executor_queryset = base_executor.distinct().order_by("username")
-        self.fields["executor"].queryset = executor_queryset
+        self._current_user = user
+        self._executor_creating = bool(
+            user
+            and user.is_authenticated
+            and user.roles.filter(name__iexact="executor").exists()
+            and not user.is_superuser
+            and not self.instance.pk
+        )
 
-        base_co_executor = User.objects.filter(roles__name__iexact="executor")
-        if self.instance and self.instance.pk:
-            co_executor_queryset = User.objects.filter(
-                models.Q(roles__name__iexact="executor") | models.Q(pk__in=self.instance.co_executors.values_list("pk", flat=True))
-            ).distinct().order_by("username")
+        if self._executor_creating:
+            # Remove executor/co_executors from the form entirely; the view sets them.
+            self.fields.pop("executor", None)
+            self.fields.pop("co_executors", None)
         else:
-            co_executor_queryset = base_co_executor.distinct().order_by("username")
-        self.fields["co_executors"].queryset = co_executor_queryset
+            base_executor = User.objects.filter(roles__name__iexact="executor")
+            if self.instance and self.instance.pk and self.instance.executor:
+                executor_queryset = User.objects.filter(
+                    models.Q(roles__name__iexact="executor") | models.Q(pk=self.instance.executor.pk)
+                ).distinct().order_by("username")
+            else:
+                executor_queryset = base_executor.distinct().order_by("username")
+            self.fields["executor"].queryset = executor_queryset
+
+            base_co_executor = User.objects.filter(roles__name__iexact="executor")
+            if self.instance and self.instance.pk:
+                co_executor_queryset = User.objects.filter(
+                    models.Q(roles__name__iexact="executor") | models.Q(pk__in=self.instance.co_executors.values_list("pk", flat=True))
+                ).distinct().order_by("username")
+            else:
+                co_executor_queryset = base_co_executor.distinct().order_by("username")
+            self.fields["co_executors"].queryset = co_executor_queryset
+
+        project_queryset = Project.objects.all().order_by("title")
+        if user and user.is_authenticated and user.roles.filter(name__iexact="executor").exists() and not user.is_superuser:
+            project_queryset = Project.objects.filter(
+                models.Q(owner=user)
+                | models.Q(members=user)
+                | models.Q(tasks__executor=user)
+                | models.Q(tasks__co_executors=user)
+            ).distinct().order_by("title")
+            if self.instance and self.instance.pk and self.instance.project_id:
+                project_queryset = Project.objects.filter(
+                    models.Q(owner=user)
+                    | models.Q(members=user)
+                    | models.Q(tasks__executor=user)
+                    | models.Q(tasks__co_executors=user)
+                    | models.Q(pk=self.instance.project_id)
+                ).distinct().order_by("title")
+        self.fields["project"].queryset = project_queryset
 
     def clean_executor(self):
         executor = self.cleaned_data.get("executor")
@@ -195,6 +228,8 @@ class TaskForm(forms.ModelForm):
 
     def clean_co_executors(self):
         co_executors = self.cleaned_data.get("co_executors")
+        if not co_executors:
+            return co_executors
         invalid = [user.username for user in co_executors if not user.roles.filter(name__iexact="executor").exists()]
         if invalid:
             raise forms.ValidationError(

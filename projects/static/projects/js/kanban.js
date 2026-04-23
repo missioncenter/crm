@@ -119,12 +119,88 @@ function bindActivityFeed() {
   const updatedAt = root.querySelector("[data-activity-feed-updated-at]");
   const feedContainer = document.getElementById("global-activity-feed");
   const feedUrl = root.dataset.activityFeedUrl;
+  let feedList = root.querySelector("[data-activity-feed-list]");
+  let feedSentinel = root.querySelector("[data-activity-feed-sentinel]");
+  let feedLoading = root.querySelector("[data-activity-feed-loading]");
+  let nextOffset = Number(root.dataset.activityFeedNextOffset || (feedList ? feedList.children.length : 0));
+  let hasMore = root.dataset.activityFeedHasMore === "true";
+  let loadingMore = false;
+  let observer = null;
 
   const renderUpdatedAt = () => {
     if (!updatedAt) return;
     const now = new Date();
     updatedAt.textContent = "Updated " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
+
+  const syncState = () => {
+    feedList = root.querySelector("[data-activity-feed-list]");
+    feedSentinel = root.querySelector("[data-activity-feed-sentinel]");
+    feedLoading = root.querySelector("[data-activity-feed-loading]");
+    if (!feedList) return;
+    root.dataset.activityFeedNextOffset = String(nextOffset);
+    root.dataset.activityFeedHasMore = hasMore ? "true" : "false";
+    if (observer) observer.disconnect();
+    if (feedSentinel && hasMore) {
+      observer.observe(feedSentinel);
+    }
+  };
+
+  const setLoading = (isLoading) => {
+    if (feedLoading) {
+      feedLoading.classList.toggle("hidden", !isLoading);
+    }
+  };
+
+  const replaceFeed = (html, emptyHtml, newHasMore, newNextOffset) => {
+    if (!feedContainer) return;
+    feedContainer.innerHTML = html || emptyHtml || "";
+    nextOffset = Number(newNextOffset || 0);
+    hasMore = Boolean(newHasMore);
+    syncState();
+  };
+
+  const appendFeed = (html, newHasMore, newNextOffset) => {
+    if (!feedList) return;
+    if (html) {
+      feedList.insertAdjacentHTML("beforeend", html);
+    }
+    nextOffset = Number(newNextOffset || nextOffset);
+    hasMore = Boolean(newHasMore);
+    syncState();
+  };
+
+  const loadMore = () => {
+    if (!feedUrl || !feedContainer || loadingMore || !hasMore) return Promise.resolve();
+    loadingMore = true;
+    setLoading(true);
+    const url = new URL(feedUrl, window.location.origin);
+    url.searchParams.set("mode", "append");
+    url.searchParams.set("offset", String(nextOffset));
+    url.searchParams.set("limit", "20");
+    return fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data.ok) {
+          showToast(data.error || "Unable to load more activity.", false);
+          return;
+        }
+        appendFeed(data.feed_html, data.has_more, data.next_offset);
+      })
+      .catch(() => showToast("Unable to load more activity.", false))
+      .finally(() => {
+        loadingMore = false;
+        setLoading(false);
+      });
+  };
+
+  observer = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      loadMore();
+    }
+  }, { root: null, rootMargin: "200px 0px" });
+
+  syncState();
 
   const refreshFeed = () => {
     if (!feedUrl || !feedContainer) return Promise.resolve();
@@ -136,7 +212,7 @@ function bindActivityFeed() {
           showToast(data.error || "Unable to refresh activity feed.", false);
           return;
         }
-        feedContainer.innerHTML = data.feed_html;
+        replaceFeed(data.feed_html, data.empty_html, data.has_more, data.next_offset);
         renderUpdatedAt();
       })
       .catch(() => showToast("Unable to refresh activity feed.", false))
@@ -147,6 +223,9 @@ function bindActivityFeed() {
 
   if (refreshButton) {
     refreshButton.addEventListener("click", refreshFeed);
+  }
+  if (feedSentinel && hasMore) {
+    observer.observe(feedSentinel);
   }
   renderUpdatedAt();
   window.setInterval(refreshFeed, 60000);

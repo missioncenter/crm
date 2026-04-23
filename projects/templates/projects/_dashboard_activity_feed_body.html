@@ -1,0 +1,15 @@
+<div class="space-y-4" data-activity-feed-list>
+    {% if activity_feed %}
+        {% include "projects/_dashboard_activity_feed_items.html" with activity_feed=activity_feed %}
+    {% else %}
+        {% include "projects/_dashboard_activity_feed_empty.html" %}
+    {% endif %}
+</div>
+
+<div class="mt-4 hidden text-center text-sm text-slate-500" data-activity-feed-loading>
+    Loading more activity...
+</div>
+
+{% if activity_feed_has_more %}
+<div class="h-1 w-full" data-activity-feed-sentinel aria-hidden="true"></div>
+{% endif %}

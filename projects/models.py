@@ -152,6 +152,21 @@ class Task(models.Model):
 
         super().save(*args, **kwargs)
 
+        actor = get_current_user()
+        actor_user = actor if actor and actor.is_authenticated else None
+
+        if old_task is None:
+            if self.executor_id:
+                message = f"Task created and assigned to {self.executor.username}"
+            else:
+                message = "Task created"
+            TaskActivity.objects.create(
+                task=self,
+                user=actor_user,
+                message=message,
+            )
+            return
+
         if not old_task:
             return
 
@@ -165,11 +180,9 @@ class Task(models.Model):
 
         if not changes:
             return
-
-        actor = get_current_user()
         TaskActivity.objects.create(
             task=self,
-            user=actor if actor and actor.is_authenticated else None,
+            user=actor_user,
             message="; ".join(changes),
         )
 

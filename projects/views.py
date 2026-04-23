@@ -140,6 +140,8 @@ def can_edit_task(user, task):
         return False
     if is_admin_role(user):
         return True
+    if task.owner_id == user.id:
+        return True
     return task.can_update_status(user)
 
 
@@ -147,6 +149,8 @@ def can_edit_task_progress(user, task):
     if not user.is_authenticated:
         return False
     if is_admin_role(user):
+        return True
+    if task.owner_id == user.id:
         return True
     if is_executor_role(user):
         return True
@@ -156,20 +160,22 @@ def can_edit_task_progress(user, task):
 def can_delete_task(user, task):
     if not user.is_authenticated:
         return False
-    return is_admin_role(user)
+    if is_admin_role(user):
+        return True
+    return task.owner_id == user.id
 
 
 def can_view_all_activity_feed(user):
     return is_admin_role(user) or has_role(user, "content") or has_role(user, "pm")
 
 
-def build_dashboard_activity_feed(user, limit=20):
+def build_dashboard_activity_feed(user, offset=0, limit=20):
     if can_view_all_activity_feed(user):
         task_ids = list(Task.objects.values_list("pk", flat=True))
     else:
         task_ids = list(get_user_tasks(user).values_list("pk", flat=True))
     if not task_ids:
-        return []
+        return [], False, 0
 
     activities = list(
         TaskActivity.objects.filter(task_id__in=task_ids)
@@ -211,7 +217,10 @@ def build_dashboard_activity_feed(user, limit=20):
         )
 
     feed_items.sort(key=lambda item: item["timestamp"], reverse=True)
-    return feed_items[:limit]
+    paged_items = feed_items[offset : offset + limit]
+    next_offset = offset + len(paged_items)
+    has_more = next_offset < len(feed_items)
+    return paged_items, has_more, next_offset
 
 
 @login_required
@@ -277,12 +286,14 @@ def dashboard(request):
 
 @login_required
 def home(request):
-    activity_feed = build_dashboard_activity_feed(request.user, limit=20)
+    activity_feed, has_more, next_offset = build_dashboard_activity_feed(request.user, offset=0, limit=20)
     return render(
         request,
         "projects/home.html",
         {
             "activity_feed": activity_feed,
+            "activity_feed_has_more": has_more,
+            "activity_feed_next_offset": next_offset,
             "activity_feed_global": can_view_all_activity_feed(request.user),
         },
     )
@@ -290,13 +301,37 @@ def home(request):
 
 @login_required
 def dashboard_activity_feed(request):
-    activity_feed = build_dashboard_activity_feed(request.user, limit=20)
-    feed_html = render_to_string(
-        "projects/_dashboard_activity_feed.html",
-        {"activity_feed": activity_feed},
-        request=request,
-    )
-    return JsonResponse({"ok": True, "feed_html": feed_html, "updated_at": timezone.now().isoformat()})
+    mode = request.GET.get("mode", "replace")
+    try:
+        offset = int(request.GET.get("offset", 0))
+    except ValueError:
+        offset = 0
+    try:
+        limit = int(request.GET.get("limit", 20))
+    except ValueError:
+        limit = 20
+    offset = max(0, offset)
+    limit = max(1, min(limit, 50))
+
+    activity_feed, has_more, next_offset = build_dashboard_activity_feed(request.user, offset=offset, limit=limit)
+    template_name = "projects/_dashboard_activity_feed_items.html" if mode == "append" else "projects/_dashboard_activity_feed_body.html"
+    context = {
+        "activity_feed": activity_feed,
+        "activity_feed_has_more": has_more,
+        "activity_feed_next_offset": next_offset,
+    }
+    feed_html = render_to_string(template_name, context, request=request)
+    empty_html = ""
+    if mode != "append" and not activity_feed:
+        empty_html = render_to_string("projects/_dashboard_activity_feed_empty.html", request=request)
+    return JsonResponse({
+        "ok": True,
+        "feed_html": feed_html,
+        "empty_html": empty_html,
+        "has_more": has_more,
+        "next_offset": next_offset,
+        "updated_at": timezone.now().isoformat(),
+    })
 
 
 @login_required
@@ -669,14 +704,16 @@ def update_task_progress(request, pk):
 
 @login_required
 def task_create(request):
-    if is_executor_role(request.user) and not can_manage_projects(request.user):
-        return forbidden_response(request, "Executors cannot create tasks.")
-    form = TaskForm(request.POST or None)
+    form = TaskForm(request.POST or None, user=request.user)
     if form.is_valid():
         task = form.save(commit=False)
         task.owner = request.user
+        if is_executor_role(request.user) and not request.user.is_superuser:
+            task.executor = request.user
         task.save()
         form.save_m2m()
+        if is_executor_role(request.user) and not request.user.is_superuser:
+            task.co_executors.clear()
         return redirect("task_list")
     return render(request, "projects/task_form.html", {"form": form, "form_title": "Create Task"})
 
@@ -685,8 +722,9 @@ def task_create(request):
 def task_update(request, pk):
     task = get_object_or_404(Task, pk=pk)
     if not (is_admin_role(request.user) or task.can_update_status(request.user)):
-        return forbidden_response(request, "Only task participants can edit this task.")
-    form = TaskForm(request.POST or None, instance=task)
+        if task.owner_id != request.user.id:
+            return forbidden_response(request, "Only task participants or the task owner can edit this task.")
+    form = TaskForm(request.POST or None, instance=task, user=request.user)
     if form.is_valid():
         form.save()
         return redirect("task_list")
@@ -697,7 +735,7 @@ def task_update(request, pk):
 def task_delete(request, pk):
     task = get_object_or_404(Task, pk=pk)
     if not can_delete_task(request.user, task):
-        return forbidden_response(request, "Only admins can delete tasks.")
+        return forbidden_response(request, "Only admins or the task owner can delete this task.")
     if request.method == "POST":
         task.delete()
         return redirect("task_list")

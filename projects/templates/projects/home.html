@@ -32,7 +32,7 @@
 </div>
 {% endblock %}
 {% block content %}
-<section class="mb-6" data-activity-feed-root data-activity-feed-url="{% url 'dashboard_activity_feed' %}">
+<section class="mb-6" data-activity-feed-root data-activity-feed-url="{% url 'dashboard_activity_feed' %}" data-activity-feed-has-more="{{ activity_feed_has_more|yesno:'true,false' }}" data-activity-feed-next-offset="{{ activity_feed_next_offset }}">
     <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
             <div>
@@ -48,7 +48,7 @@
         </div>
         <div class="px-5 py-5">
             <div id="global-activity-feed">
-                {% include "projects/_dashboard_activity_feed.html" with activity_feed=activity_feed %}
+                {% include "projects/_dashboard_activity_feed_body.html" with activity_feed=activity_feed activity_feed_has_more=activity_feed_has_more activity_feed_next_offset=activity_feed_next_offset %}
             </div>
         </div>
     </div>

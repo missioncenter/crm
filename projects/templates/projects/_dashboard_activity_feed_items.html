@@ -1,0 +1,25 @@
+{% for item in activity_feed %}
+<article class="relative rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+    <div class="absolute left-0 top-4 h-10 w-1 rounded-r-full {% if item.kind == 'comment' %}bg-sky-500{% else %}bg-emerald-500{% endif %}"></div>
+    <div class="flex items-start gap-3 pl-3">
+        <div class="mt-0.5 flex h-10 w-10 items-center justify-center rounded-full {% if item.kind == 'comment' %}bg-sky-50 text-sky-700{% else %}bg-emerald-50 text-emerald-700{% endif %} font-semibold">
+            {% if item.kind == 'comment' %}C{% else %}A{% endif %}
+        </div>
+        <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+                <span class="rounded-full px-2.5 py-1 text-xs font-semibold {% if item.kind == 'comment' %}bg-sky-100 text-sky-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">{{ item.kind_label }}</span>
+                <span class="font-semibold text-slate-900">{% if item.user %}{{ item.user.username }}{% else %}System{% endif %}</span>
+                <span class="text-slate-400">{{ item.timestamp|date:"M d, H:i" }}</span>
+            </div>
+            <p class="mt-2 text-sm leading-6 text-slate-700">
+                <a class="font-semibold text-slate-900 hover:text-blue-700" href="{{ item.url }}">{{ item.task.title }}</a>
+                <span class="text-slate-500">in</span>
+                <span class="font-medium text-slate-600">{{ item.project.title }}</span>
+            </p>
+            <p class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">
+                {{ item.message|linebreaksbr }}
+            </p>
+        </div>
+    </div>
+</article>
+{% endfor %}

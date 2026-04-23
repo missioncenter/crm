@@ -456,11 +456,7 @@ a:hover { text-decoration: underline; }
 .overdue-row td { background: rgba(179,38,30,.04); }
 .overdue-label { color: var(--md-error); font-weight: 600; font-size: 0.8rem; }
 
-.task-filters {
-  width: 100%;
-  max-width: none;
-  margin-bottom: 20px;
-}
+
 
 .task-filter-form {
   display: grid;
@@ -493,6 +489,12 @@ a:hover { text-decoration: underline; }
   padding: 28px;
   box-shadow: var(--md-elev1);
   max-width: 720px;
+}
+
+.task-filters {
+  width: 100%;
+  max-width: none;
+  margin-bottom: 20px;
 }
 
 .field-group {
